@@ -32,12 +32,16 @@ impl<'a> Engine<'a> {
                     ScriptDirective::Jump(jump) => match &jump.choices {
                         Some(_) => {
                             if choice {
-                                self.script = jump.endpoint.clone()
+                                self.script = jump.endpoint.clone();
+                                self.iscript = 0;
                             } else {
                                 self.iscript += 1
                             }
                         }
-                        None => self.script = jump.endpoint.clone(),
+                        None => {
+                            self.iscript = 0;
+                            self.script = jump.endpoint.clone()
+                        }
                     },
                     ScriptDirective::LoadBG(bg) => {
                         self.bg = Some(bg.bg_path.to_owned());
