@@ -1,29 +1,29 @@
 use super::directives::{Directive, JumpDirective, LoadBGDirective, SpriteDirective};
 use std::{fmt::Debug, fs, io};
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Script {
     /// Name of the script file
-    name: String,
+    pub name: String,
     /// Parsed script's content
-    ctx: Vec<ScriptContext>,
+    pub ctx: Vec<ScriptContext>,
     // References to other script files
     //refs: Option<Box<HashMap<String, Script>>>,
 }
 
-#[derive(Debug)]
-enum ScriptContext {
+#[derive(Clone, Debug)]
+pub enum ScriptContext {
     Dialogue(ScriptDialogue),
     Directive(ScriptDirective),
 }
 
-#[derive(Debug)]
-struct ScriptDialogue {
-    character_name: String,
-    dialogues: Vec<String>,
+#[derive(Clone, Debug)]
+pub struct ScriptDialogue {
+    pub character_name: String,
+    pub dialogues: Vec<String>,
 }
 
-#[derive(Debug)]
-enum ScriptDirective {
+#[derive(Clone, Debug)]
+pub enum ScriptDirective {
     Jump(JumpDirective),
     Sprite(SpriteDirective),
     LoadBG(LoadBGDirective),
