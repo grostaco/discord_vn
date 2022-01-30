@@ -1,5 +1,5 @@
+use super::directives::{Directive, JumpDirective};
 use std::{fmt::Debug, fs, io};
-
 #[derive(Debug)]
 pub struct Script {
     /// Name of the script file
@@ -13,7 +13,7 @@ pub struct Script {
 #[derive(Debug)]
 enum ScriptContext {
     Dialogue(ScriptDialogue),
-    Meta(ScriptMeta),
+    Directive(ScriptDirective),
 }
 
 #[derive(Debug)]
@@ -23,14 +23,8 @@ struct ScriptDialogue {
 }
 
 #[derive(Debug)]
-struct ScriptMeta {
-    directive_type: ScriptMetaDirective,
-    context: String,
-}
-
-#[derive(Debug)]
-enum ScriptMetaDirective {
-    Jump,
+enum ScriptDirective {
+    Jump(JumpDirective),
     Sprite,
     Ending,
 }
@@ -57,25 +51,23 @@ impl Script {
                         + 1;
                     let ctx_iend = line.rfind(')').expect("Expected closing parenthesis");
 
-                    ctx.push(ScriptContext::Meta(ScriptMeta {
-                        directive_type: match line.get(directive_ibegin..directive_iend).unwrap() {
-                            "jump" => ScriptMetaDirective::Jump,
-                            "sprite" => ScriptMetaDirective::Sprite,
-                            "ending" => ScriptMetaDirective::Ending,
+                    ctx.push(ScriptContext::Directive(
+                        match line.get(directive_ibegin..directive_iend).unwrap() {
+                            "jump" => ScriptDirective::Jump(JumpDirective::from_context(
+                                line.get(directive_iend + 1..ctx_iend).unwrap(),
+                            )),
+                            "sprite" => ScriptDirective::Sprite,
+                            "ending" => ScriptDirective::Ending,
                             directive => panic!("Unrecognized directive {}!", directive),
                         },
-                        context: line
-                            .get(directive_iend + 1..ctx_iend)
-                            .map(str::to_string)
-                            .unwrap(),
-                    }))
+                    ));
                 } else {
                     ctx.push(ScriptContext::Dialogue(ScriptDialogue {
                         character_name: line.get(1..iend).map(str::to_string).unwrap(),
                         dialogues: Vec::new(),
                     }))
                 }
-            } else {
+            } else if line.len() != 0 {
                 // the rest here must be dialogues
                 match ctx.last_mut().expect(&format!(
                     "{}:{}:{} Unmatched dialogue with character",
