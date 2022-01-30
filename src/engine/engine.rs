@@ -5,7 +5,7 @@ use super::{
 use crate::Scene;
 
 pub struct Engine<'a> {
-    script: Script,
+    pub script: Script,
     iscript: usize,
     scene: Scene<'a>,
     bg: Option<String>,
@@ -21,8 +21,8 @@ impl<'a> Engine<'a> {
         }
     }
 
-    pub fn current(&self) -> &ScriptContext {
-        &self.script.ctx[self.iscript]
+    pub fn current(&self) -> Option<&ScriptContext> {
+        self.script.ctx.get(self.iscript)
     }
 
     pub fn next(&mut self, choice: bool) -> Option<&ScriptContext> {
@@ -53,19 +53,38 @@ impl<'a> Engine<'a> {
     }
 
     pub fn render(&self) {
-        if let ScriptContext::Dialogue(dialogue) = self.current() {
-            let image = self.scene.draw(
-                self.bg.as_ref().map(|bg| bg.as_str()),
-                &dialogue.character_name,
-                &dialogue
-                    .dialogues
-                    .iter()
-                    .fold(String::new(), |a, b| a + " " + &b),
-            );
+        if let Some(current) = self.current() {
+            if let ScriptContext::Dialogue(dialogue) = current {
+                let image = self.scene.draw(
+                    self.bg.as_ref().map(|bg| bg.as_str()),
+                    &dialogue.character_name,
+                    &dialogue
+                        .dialogues
+                        .iter()
+                        .fold(String::new(), |a, b| a + " " + &b),
+                );
 
-            image
-                .save(&format!("{}_{}.png", self.script.name, self.iscript))
-                .expect("Cannot save image");
+                image
+                    .save(&format!("{}_{}.png", self.script.name, self.iscript))
+                    .expect("Cannot save image");
+            }
+        }
+    }
+
+    pub fn render_to(&self, path: &str) {
+        if let Some(current) = self.current() {
+            if let ScriptContext::Dialogue(dialogue) = current {
+                let image = self.scene.draw(
+                    self.bg.as_ref().map(|bg| bg.as_str()),
+                    &dialogue.character_name,
+                    &dialogue
+                        .dialogues
+                        .iter()
+                        .fold(String::new(), |a, b| a + " " + &b),
+                );
+
+                image.save(path).expect("Cannot save image");
+            }
         }
     }
 }
