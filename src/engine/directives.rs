@@ -3,7 +3,7 @@ trait Directive {
     fn from_context(ctx: &str) -> Self;
 }
 
-struct JokeDirective {}
+struct JumpDirective {}
 
 struct SpriteDirective {}
 
