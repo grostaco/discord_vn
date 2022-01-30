@@ -1,4 +1,4 @@
-use super::directives::{Directive, JumpDirective, SpriteDirective};
+use super::directives::{Directive, JumpDirective, LoadBGDirective, SpriteDirective};
 use std::{fmt::Debug, fs, io};
 #[derive(Debug)]
 pub struct Script {
@@ -26,6 +26,7 @@ struct ScriptDialogue {
 enum ScriptDirective {
     Jump(JumpDirective),
     Sprite(SpriteDirective),
+    LoadBG(LoadBGDirective),
 }
 
 impl Script {
@@ -56,6 +57,9 @@ impl Script {
                             "jump" => ScriptDirective::Jump(JumpDirective::from_context(context)),
                             "sprite" => {
                                 ScriptDirective::Sprite(SpriteDirective::from_context(context))
+                            }
+                            "loadbg" => {
+                                ScriptDirective::LoadBG(LoadBGDirective::from_context(context))
                             }
 
                             directive => panic!("Unrecognized directive {}", directive),
