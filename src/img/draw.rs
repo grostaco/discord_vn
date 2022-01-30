@@ -16,20 +16,24 @@ pub struct Scene<'a> {
 impl<'a> Scene<'a> {
     pub fn draw(
         &self,
-        bg_path: &str,
+        bg_path: Option<&str>,
         character_name: &str,
         dialogue: &str,
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
-        let f = Reader::open(bg_path)
-            .expect("Cannot open background file")
-            .decode()
-            .unwrap();
-
         let v_metrics = self.font.v_metrics(self.scale);
         let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
         let color = Rgba::from_slice(&[255, 255, 255, 255]);
-        overlay(&mut image, &f, 0, 0);
+
+        if let Some(bg_path) = bg_path {
+            let bg_img = Reader::open(bg_path)
+                .expect("Cannot open background file")
+                .decode()
+                .unwrap();
+
+            overlay(&mut image, &bg_img, 0, 0);
+        }
+
         let character_name_glyphs = self
             .font
             .layout(
@@ -80,6 +84,9 @@ impl<'a> Scene<'a> {
         }
 
         for glyphs in glyphs_vec {
+            if glyphs.len() == 0 {
+                continue;
+            }
             let width = glyphs_width(&glyphs);
             if xcur + width + WHITESPACE_PAD > self.text.xmax {
                 xcur = 0;
