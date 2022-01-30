@@ -1,4 +1,4 @@
-use image::{DynamicImage, ImageBuffer, Rgba};
+use image::{imageops::overlay, io::Reader, DynamicImage, ImageBuffer, Pixel, Rgba};
 use rusttype::{point, Font, Scale};
 
 use super::{glyphs_width, size::Size};
@@ -14,11 +14,22 @@ pub struct Scene<'a> {
 }
 
 impl<'a> Scene<'a> {
-    pub fn draw(&self, character_name: &str, dialogue: &str) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+    pub fn draw(
+        &self,
+        bg_path: &str,
+        character_name: &str,
+        dialogue: &str,
+    ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+        let f = Reader::open(bg_path)
+            .expect("Cannot open background file")
+            .decode()
+            .unwrap();
+
         let v_metrics = self.font.v_metrics(self.scale);
         let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
-
+        let color = Rgba::from_slice(&[255, 255, 255, 255]);
+        overlay(&mut image, &f, 0, 0);
         let character_name_glyphs = self
             .font
             .layout(
@@ -51,14 +62,18 @@ impl<'a> Scene<'a> {
 
         for glyph in character_name_glyphs {
             if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                // Draw the glyph into the image per-pixel by using the draw closure
                 glyph.draw(|x, y, v| {
+                    let image_x = x + bounding_box.min.x as u32;
+                    let image_y = y + bounding_box.min.y as u32;
+
+                    let pixel = image.get_pixel(image_x, image_y);
+                    let pix = pixel.map2(&color, |p, q| {
+                        ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
+                    });
                     image.put_pixel(
-                        // Offset the position by the glyph bounding box
                         x + bounding_box.min.x as u32,
                         y + bounding_box.min.y as u32,
-                        // Turn the coverage into an alpha value
-                        Rgba([255, 255, 255, (v * 255.0) as u8]),
+                        pix,
                     )
                 });
             }
@@ -73,15 +88,15 @@ impl<'a> Scene<'a> {
 
             for glyph in glyphs {
                 if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                    // Draw the glyph into the image per-pixel by using the draw closure
                     glyph.draw(|x, y, v| {
-                        image.put_pixel(
-                            // Offset the position by the glyph bounding box
-                            xcur + x + bounding_box.min.x as u32,
-                            ycur + y + bounding_box.min.y as u32,
-                            // Turn the coverage into an alpha value
-                            Rgba([255, 255, 255, (v * 255.0) as u8]),
-                        )
+                        let image_x = xcur + x + bounding_box.min.x as u32;
+                        let image_y = ycur + y + bounding_box.min.y as u32;
+
+                        let pixel = image.get_pixel(image_x, image_y);
+                        let pix = pixel.map2(&color, |p, q| {
+                            ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
+                        });
+                        image.put_pixel(image_x, image_y, pix)
                     });
                 }
             }
