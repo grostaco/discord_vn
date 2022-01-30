@@ -1,4 +1,4 @@
-use super::directives::{Directive, JumpDirective};
+use super::directives::{Directive, JumpDirective, SpriteDirective};
 use std::{fmt::Debug, fs, io};
 #[derive(Debug)]
 pub struct Script {
@@ -25,8 +25,7 @@ struct ScriptDialogue {
 #[derive(Debug)]
 enum ScriptDirective {
     Jump(JumpDirective),
-    Sprite,
-    Ending,
+    Sprite(SpriteDirective),
 }
 
 impl Script {
@@ -50,15 +49,16 @@ impl Script {
                         .expect("directives must be separated by a space")
                         + 1;
                     let ctx_iend = line.rfind(')').expect("Expected closing parenthesis");
+                    let context = line.get(directive_iend + 1..ctx_iend).unwrap();
 
                     ctx.push(ScriptContext::Directive(
                         match line.get(directive_ibegin..directive_iend).unwrap() {
-                            "jump" => ScriptDirective::Jump(JumpDirective::from_context(
-                                line.get(directive_iend + 1..ctx_iend).unwrap(),
-                            )),
-                            "sprite" => ScriptDirective::Sprite,
-                            "ending" => ScriptDirective::Ending,
-                            directive => panic!("Unrecognized directive {}!", directive),
+                            "jump" => ScriptDirective::Jump(JumpDirective::from_context(context)),
+                            "sprite" => {
+                                ScriptDirective::Sprite(SpriteDirective::from_context(context))
+                            }
+
+                            directive => panic!("Unrecognized directive {}", directive),
                         },
                     ));
                 } else {
