@@ -1,6 +1,6 @@
 pub struct Size {
-    xmin: u32,
-    xmax: u32,
-    ymin: u32,
-    ymax: u32,
+    pub xmin: u32,
+    pub xmax: u32,
+    pub ymin: u32,
+    pub ymax: u32,
 }
