@@ -4,22 +4,22 @@ pub trait Directive {
     fn from_context(ctx: &str) -> Self;
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct JumpDirective {
     pub choices: Option<(String, String)>,
     pub endpoint: Script,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct SpriteDirective {
     location: Option<String>,
     sprite_path: Option<String>,
     hidden: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct LoadBGDirective {
-    bg_path: String,
+    pub bg_path: String,
 }
 
 impl Directive for JumpDirective {
