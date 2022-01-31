@@ -1,4 +1,3 @@
-use super::util::strip_whitespace;
 use std::{collections::HashMap, fs, io};
 
 #[derive(Debug)]
@@ -28,13 +27,12 @@ impl Config {
 
                 fields.insert(last_key.unwrap().to_owned(), HashMap::new());
             } else {
-                let line = strip_whitespace(line.to_owned());
                 let kv = line.split("=").take(2).collect::<Vec<&str>>();
                 if let [key, value] = &kv[..] {
                     fields
                         .get_mut(last_key.unwrap())
                         .unwrap()
-                        .insert(key.to_string(), value.to_string());
+                        .insert(key.trim().to_string(), value.trim().to_string());
                 } else {
                     panic!(
                         "{}:{}:{} Key and values must be separated by =",
