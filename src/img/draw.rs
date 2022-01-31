@@ -14,7 +14,7 @@ pub struct Scene<'a> {
 }
 
 impl<'a> Scene<'a> {
-    pub fn draw(
+    pub fn draw_dialogue(
         &self,
         bg_path: Option<&str>,
         character_name: &str,
@@ -23,7 +23,7 @@ impl<'a> Scene<'a> {
         let v_metrics = self.font.v_metrics(self.scale);
         let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
-        let color = Rgba::from_slice(&[0, 0, 0, 255]);
+        let color = Rgba::from_slice(&[255, 255, 255, 255]);
 
         if let Some(bg_path) = bg_path {
             let bg_img = Reader::open(bg_path)
@@ -108,6 +108,113 @@ impl<'a> Scene<'a> {
                 }
             }
             xcur += width + WHITESPACE_PAD;
+        }
+
+        image
+    }
+
+    pub fn draw_choice(
+        &self,
+        bg_path: Option<&str>,
+        choices: (&str, &str),
+    ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+        let v_metrics = self.font.v_metrics(self.scale);
+        let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
+        let color = Rgba::from_slice(&[255, 255, 255, 255]);
+
+        if let Some(bg_path) = bg_path {
+            let bg_img = Reader::open(bg_path)
+                .expect("Cannot open background file")
+                .decode()
+                .unwrap();
+
+            overlay(&mut image, &bg_img, 0, 0);
+        }
+
+        let choice_a_glyphs = self
+            .font
+            .layout(
+                choices.0,
+                self.scale,
+                point(self.screen.xmax as f32 / 2.0, self.screen.ymax as f32 / 4.0),
+            )
+            .collect::<Vec<_>>();
+        let choice_b_glyphs = self
+            .font
+            .layout(
+                choices.1,
+                self.scale,
+                point(
+                    self.screen.xmax as f32 / 2.0,
+                    self.screen.ymax as f32 / 4.0 + v_metrics.ascent * 5.0,
+                ),
+            )
+            .collect::<Vec<_>>();
+
+        let a_width = glyphs_width(&choice_a_glyphs);
+        let b_width = glyphs_width(&choice_b_glyphs);
+
+        for glyph in &choice_a_glyphs {
+            if let Some(bounding_box) = glyph.pixel_bounding_box() {
+                glyph.draw(|x, y, v| {
+                    let image_x = x + bounding_box.min.x as u32;
+                    let image_y = y + bounding_box.min.y as u32;
+
+                    let pixel = image.get_pixel(image_x - a_width / 2, image_y);
+                    let pix = pixel.map2(&color, |p, q| {
+                        ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
+                    });
+                    image.put_pixel(
+                        x + bounding_box.min.x as u32 - a_width / 2,
+                        y + bounding_box.min.y as u32,
+                        pix,
+                    );
+                });
+            }
+        }
+        let min_x = choice_a_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().min.x)
+            .unwrap() as u32;
+        let max_y = choice_a_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().max.y)
+            .unwrap() as u32;
+
+        for x in min_x - a_width / 2..self.screen.xmax - (min_x - a_width / 2) {
+            image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *color);
+        }
+
+        for glyph in &choice_b_glyphs {
+            if let Some(bounding_box) = glyph.pixel_bounding_box() {
+                glyph.draw(|x, y, v| {
+                    let image_x = x + bounding_box.min.x as u32;
+                    let image_y = y + bounding_box.min.y as u32;
+
+                    let pixel = image.get_pixel(image_x - b_width / 2, image_y);
+                    let pix = pixel.map2(&color, |p, q| {
+                        ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
+                    });
+                    image.put_pixel(
+                        x + bounding_box.min.x as u32 - b_width / 2,
+                        y + bounding_box.min.y as u32,
+                        pix,
+                    );
+                });
+            }
+        }
+
+        let min_x = choice_b_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().min.x)
+            .unwrap() as u32;
+        let max_y = choice_b_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().max.y)
+            .unwrap() as u32;
+
+        for x in min_x - b_width / 2..self.screen.xmax - (min_x - b_width / 2) {
+            image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *color);
         }
 
         image
