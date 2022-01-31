@@ -116,7 +116,7 @@ impl<'a> Scene<'a> {
     pub fn draw_choice(
         &self,
         bg_path: Option<&str>,
-        choices: (&str, &str),
+        choices: &(&str, &str),
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
