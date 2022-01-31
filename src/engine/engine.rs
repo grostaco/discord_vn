@@ -61,7 +61,10 @@ impl<'a> Engine<'a> {
             match context {
                 ScriptContext::Dialogue(_) => break,
                 ScriptContext::Directive(directive) => match directive {
-                    ScriptDirective::Jump(_) => break,
+                    ScriptDirective::Jump(jump) => match &jump.choices {
+                        Some(_) => break,
+                        _ => {}
+                    },
                     _ => {}
                 },
             };
