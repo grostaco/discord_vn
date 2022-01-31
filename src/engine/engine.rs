@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use super::{
     script::{ScriptContext, ScriptDirective},
     Script,
@@ -6,13 +8,13 @@ use crate::Scene;
 
 pub struct Engine<'a> {
     pub script: Script,
-    iscript: usize,
-    scene: Scene<'a>,
+    pub iscript: usize,
+    scene: &'a Scene<'a>,
     bg: Option<String>,
 }
 
 impl<'a> Engine<'a> {
-    pub fn from_file(script_path: &str, scene: Scene<'a>) -> Self {
+    pub fn from_file(script_path: &str, scene: &'a Scene<'a>) -> Self {
         Self {
             script: Script::from_file(script_path).expect("Cannot create script"),
             iscript: 0,
@@ -56,6 +58,20 @@ impl<'a> Engine<'a> {
         self.script.ctx.get(self.iscript)
     }
 
+    pub fn next_until_renderable(&mut self) -> Option<&ScriptContext> {
+        while let Some(context) = self.current() {
+            match context {
+                ScriptContext::Dialogue(_) => break,
+                ScriptContext::Directive(directive) => match directive {
+                    ScriptDirective::Jump(_) => break,
+                    _ => {}
+                },
+            };
+            self.next(false);
+        }
+        self.current()
+    }
+
     pub fn render(&self) {
         if let Some(current) = self.current() {
             if let ScriptContext::Dialogue(dialogue) = current {
@@ -69,7 +85,10 @@ impl<'a> Engine<'a> {
                 );
 
                 image
-                    .save(&format!("{}_{}.png", self.script.name, self.iscript))
+                    .save(Path::new(&format!(
+                        "{}_{}.png",
+                        self.script.name, self.iscript
+                    )))
                     .expect("Cannot save image");
             }
         }
