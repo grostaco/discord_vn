@@ -124,44 +124,57 @@ impl<'s> Begin<'s> {
             })
             .await
             .expect("Unable to create interaction");
-        // let components = Mutex::new(Arc::new(self));
-        let collector = interaction
+        let mut collector = interaction
             .get_interaction_response(http)
             .await?
             .await_component_interactions(shard_messenger)
             .await;
 
-        let begin = &Arc::new(Mutex::new(self));
+        while let Some(mci) = collector.next().await {
+            let choice = match mci.data.custom_id.as_str() {
+                "right_page_select" => false,
+                "first_choice_select" => true,
+                "second_choice_select" => false,
+                id => panic!("Cannot handle interaction custom_id {}", id),
+            };
+            self.engine.next(choice);
+            if let Some(_ctx) = self.engine.next_until_renderable() {
+                self.engine.render_to("resources/tmp.png");
 
-        collector
-            .for_each(|interaction| async move {
-                let mut begin = begin.lock().await;
-
-                let choice = match interaction.data.custom_id.as_str() {
-                    "right_page_select" => false,
-                    "first_choice_select" => true,
-                    "second_choice_select" => false,
-                    id => panic!("Cannot handle interaction custom_id {}", id),
-                };
-                begin.engine.next(choice);
-                if let Some(_ctx) = begin.engine.next_until_renderable() {
-                    begin.engine.render_to("resources/tmp.png");
-
-                    let message = temp_channel
-                        .send_files(http, vec!["resources/tmp.png"], |m| m)
-                        .await
-                        .expect("Cannot send file");
-                    interaction
-                        .create_interaction_response(http, |ir| {
-                            begin
-                                .delegate_interaction_response(ir, &message.attachments[0].url)
-                                .kind(InteractionResponseType::UpdateMessage)
+                let message = temp_channel
+                    .send_files(http, vec!["resources/tmp.png"], |m| m)
+                    .await
+                    .expect("Cannot send file");
+                mci.create_interaction_response(http, |ir| {
+                    self.delegate_interaction_response(ir, &message.attachments[0].url)
+                        .kind(InteractionResponseType::UpdateMessage)
+                })
+                .await
+                .expect("Cannot update interaction");
+            } else {
+                mci.create_interaction_response(http, |ir| {
+                    ir.interaction_response_data(|ird| {
+                        ird.create_embed(|embed| {
+                            embed
+                                .title("Thank you for using Gary's VN engine!")
+                                .description(&format!(
+                                    "You just finished playing {}",
+                                    self.config
+                                        .fields
+                                        .get("Game")
+                                        .and_then(|g| g.get("name"))
+                                        .unwrap_or(&"(name not provided)".to_owned())
+                                ))
                         })
-                        .await
-                        .expect("Cannot update interaction");
-                }
-            })
-            .await;
+                        .components(|c| c)
+                    })
+                    .kind(InteractionResponseType::UpdateMessage)
+                })
+                .await
+                .expect("Unable to update interaction");
+                break;
+            }
+        }
 
         Ok(())
     }
