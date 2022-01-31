@@ -132,7 +132,7 @@ impl<'a> Scene<'a> {
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
-        let color = Rgba::from_slice(&[255, 255, 255, 255]);
+        let color = Rgba::from_slice(&[0, 0, 0, 255]);
 
         if let Some(bg_path) = bg_path {
             let bg_img = Reader::open(bg_path)
