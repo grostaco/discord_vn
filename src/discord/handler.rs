@@ -6,11 +6,27 @@ use serenity::{
     model::{gateway::Ready, id::GuildId, interactions::Interaction},
 };
 
-pub struct Handler;
+use crate::Scene;
+
+use super::display::Begin;
+
+pub struct Handler<'a> {
+    pub scene: Scene<'a>,
+}
 
 #[async_trait]
-impl EventHandler for Handler {
-    async fn interaction_create(&self, _ctx: Context, _interaction: Interaction) {}
+impl<'a> EventHandler for Handler<'a> {
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        if let Interaction::ApplicationCommand(command) = interaction {
+            match command.data.name.as_str() {
+                "begin" => Begin::new("resources/config.conf", "resources/script.txt", &self.scene)
+                    .handle_interaction(&ctx.http, command, &ctx.shard)
+                    .await
+                    .expect("Cannot run begin command"),
+                _ => panic!("Unable to handle command!"),
+            }
+        }
+    }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
