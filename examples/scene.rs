@@ -28,6 +28,8 @@ fn main() {
         },
     };
 
-    let image = s.draw( Some("resources/bg1.png"), "Frog", "AAAAAAAAAAAAAAAAAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA");
-    image.save("image.png").unwrap();
+    let image = s.draw_dialogue( Some("resources/bg1.png"), "Frog", "AAAAAAAAAAAAAAAAAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA");
+    image.save("image_dialogue.png").unwrap();
+    let image = s.draw_choice(Some("resources/bg1.png"), &("Choice one", "Choice two"));
+    image.save("image_choice.png").unwrap();
 }
