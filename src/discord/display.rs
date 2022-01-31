@@ -3,7 +3,7 @@ use std::sync::Arc;
 use serenity::{
     builder::{CreateComponents, CreateInteractionResponse},
     client::bridge::gateway::ShardMessenger,
-    futures::{lock::Mutex, StreamExt},
+    futures::StreamExt,
     http::Http,
     model::{
         id::ChannelId,
