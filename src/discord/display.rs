@@ -1,4 +1,4 @@
-use std::{sync::Arc, thread::sleep, time::Duration};
+use std::sync::Arc;
 
 use serenity::{
     builder::{CreateComponents, CreateInteractionResponse},
@@ -153,25 +153,6 @@ impl<'s> Begin<'s> {
                 }
             })
             .await;
-        /*
-        while let Some(context) = self.engine.current() {
-            match context {
-                ScriptContext::Dialogue(dialogue) => {
-                    self.engine.render_to("resources/tmp.png");
-                    let message = temp_channel
-                        .send_files(http, vec!["resources/tmp.png"], |m| m)
-                        .await
-                        .unwrap();
-                }
-                ScriptContext::Directive(directive) => match directive {
-                    ScriptDirective::Jump(jump) => {}
-                    _ => {}
-                },
-            }
-            sent = true;
-            self.engine.next(false);
-        }
-        */
 
         Ok(())
     }

@@ -30,7 +30,7 @@ fn main() {
 
     let mut engine = Engine::from_file("resources/script.txt", &s);
 
-    while let Some(context) = engine.current() {
+    while let Some(_) = engine.current() {
         engine.render_to(&format!(
             "resources/render/{}_{}.png",
             engine
