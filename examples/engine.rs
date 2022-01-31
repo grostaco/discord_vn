@@ -28,8 +28,18 @@ fn main() {
         },
     };
 
-    let mut engine = Engine::from_file("resources/script.txt", s);
+    let mut engine = Engine::from_file("resources/script.txt", &s);
 
-    engine.next(false);
-    engine.render();
+    while let Some(context) = engine.current() {
+        engine.render_to(&format!(
+            "resources/render/{}_{}.png",
+            engine
+                .script
+                .name
+                .get(engine.script.name.rfind("/").unwrap()..)
+                .unwrap(),
+            engine.iscript
+        ));
+        engine.next(true);
+    }
 }
