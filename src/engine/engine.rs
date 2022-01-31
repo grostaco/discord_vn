@@ -75,7 +75,7 @@ impl<'a> Engine<'a> {
     pub fn render(&self) {
         if let Some(current) = self.current() {
             if let ScriptContext::Dialogue(dialogue) = current {
-                let image = self.scene.draw(
+                let image = self.scene.draw_dialogue(
                     self.bg.as_ref().map(|bg| bg.as_str()),
                     &dialogue.character_name,
                     &dialogue
@@ -97,7 +97,7 @@ impl<'a> Engine<'a> {
     pub fn render_to(&self, path: &str) {
         if let Some(current) = self.current() {
             if let ScriptContext::Dialogue(dialogue) = current {
-                let image = self.scene.draw(
+                let image = self.scene.draw_dialogue(
                     self.bg.as_ref().map(|bg| bg.as_str()),
                     &dialogue.character_name,
                     &dialogue
