@@ -144,7 +144,7 @@ impl<'s> Begin<'s> {
                     id => panic!("Cannot handle interaction custom_id {}", id),
                 };
                 begin.engine.next(choice);
-                if let Some(ctx) = begin.engine.next_until_renderable() {
+                if let Some(_ctx) = begin.engine.next_until_renderable() {
                     begin.engine.render_to("resources/tmp.png");
 
                     let message = temp_channel
