@@ -12,9 +12,11 @@ pub struct JumpDirective {
 
 #[derive(Clone, Debug)]
 pub struct SpriteDirective {
-    location: Option<String>,
-    sprite_path: Option<String>,
-    hidden: bool,
+    pub name: String,
+    pub sprite_path: String,
+    pub x: u32,
+    pub y: u32,
+    pub show: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -43,34 +45,26 @@ impl Directive for JumpDirective {
 
 impl Directive for SpriteDirective {
     /// Return a sprite directive from context
-    /// loc=[left|right], display=[any], hidden=[true|false]
+    /// name,display,x,y,show|hide
     fn from_context(ctx: &str) -> Self {
         let ctx = ctx.split_whitespace().collect::<String>();
-        let mut sprite_directive = Self {
-            location: None,
-            sprite_path: None,
-            hidden: false,
-        };
 
-        for kv in &ctx.split(",").collect::<Vec<&str>>()[..] {
-            match &kv.split("=").take(2).collect::<Vec<&str>>()[..] {
-                [key, value] => match key {
-                    &"loc" => sprite_directive.location = Some(value.to_string()),
-                    &"display" => sprite_directive.sprite_path = Some(value.to_string()),
-                    &"hidden" => {
-                        sprite_directive.hidden = match value {
-                            &"true" => true,
-                            &"false" => false,
-                            _ => panic!("Hidden value must either be true or false"),
-                        }
-                    }
-                    _ => panic!("Unknown key {} for sprite directive", key),
-                },
-                _ => panic!("Sprite directive's argument must be split by ="),
+        match &ctx.split(",").collect::<Vec<&str>>()[..] {
+            [name, display, x, y, visibility] => {
+                return Self {
+                    name: name.to_string(),
+                    sprite_path: display.to_string(),
+                    x: x.parse().expect("x must be an integer"),
+                    y: y.parse().expect("y must be an integer"),
+                    show: match *visibility {
+                        "show" => true,
+                        "hide" => false,
+                        _ => panic!("Visibility must either be show or hide"),
+                    },
+                }
             }
+            _ => panic!("Sprite directive's argument must be split by ="),
         }
-
-        sprite_directive
     }
 }
 
