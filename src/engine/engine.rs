@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use super::{
     script::{ScriptContext, ScriptDirective},
     Script,
@@ -73,40 +71,34 @@ impl<'a> Engine<'a> {
     }
 
     pub fn render(&self) {
-        if let Some(current) = self.current() {
-            if let ScriptContext::Dialogue(dialogue) = current {
-                let image = self.scene.draw_dialogue(
-                    self.bg.as_ref().map(|bg| bg.as_str()),
-                    &dialogue.character_name,
-                    &dialogue
-                        .dialogues
-                        .iter()
-                        .fold(String::new(), |a, b| a + " " + &b),
-                );
-
-                image
-                    .save(Path::new(&format!(
-                        "{}_{}.png",
-                        self.script.name, self.iscript
-                    )))
-                    .expect("Cannot save image");
-            }
-        }
+        self.render_to(&format!("{}_{}.png", self.script.name, self.iscript));
     }
 
     pub fn render_to(&self, path: &str) {
         if let Some(current) = self.current() {
-            if let ScriptContext::Dialogue(dialogue) = current {
-                let image = self.scene.draw_dialogue(
-                    self.bg.as_ref().map(|bg| bg.as_str()),
-                    &dialogue.character_name,
-                    &dialogue
-                        .dialogues
-                        .iter()
-                        .fold(String::new(), |a, b| a + " " + &b),
-                );
-
-                image.save(path).expect("Cannot save image");
+            if let Some(image) = match current {
+                ScriptContext::Dialogue(dialogue) => Some(
+                    self.scene.draw_dialogue(
+                        self.bg.as_ref().map(|bg| bg.as_str()),
+                        &dialogue.character_name,
+                        &dialogue
+                            .dialogues
+                            .iter()
+                            .fold(String::new(), |a, b| a + " " + &b),
+                    ),
+                ),
+                ScriptContext::Directive(directive) => match directive {
+                    ScriptDirective::Jump(jump) => match &jump.choices {
+                        Some((a, b)) => Some(self.scene.draw_choice(
+                            self.bg.as_ref().map(|bg| bg.as_str()),
+                            &(a.as_str(), b.as_str()),
+                        )),
+                        None => None,
+                    },
+                    _ => None,
+                },
+            } {
+                image.save(path).expect("Unable to save image");
             }
         }
     }
