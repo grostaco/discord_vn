@@ -74,16 +74,19 @@ impl<'s> Begin<'s> {
         display_link: &str,
     ) -> &'a mut CreateInteractionResponse {
         interaction.interaction_response_data(|data| {
-            data.components(|components| self.delegate_component(components))
-                .create_embed(|embed| {
-                    embed
-                        .title("Gary's VN Engine")
-                        .description(&format!(
-                            "You are currently playing {}",
-                            self.config.fields.get("Game").unwrap().get("name").unwrap()
-                        ))
-                        .image(display_link)
-                })
+            data.components(|components| {
+                let components = self.delegate_component(components);
+                components
+            })
+            .create_embed(|embed| {
+                embed
+                    .title("Gary's VN Engine")
+                    .description(&format!(
+                        "You are currently playing {}",
+                        self.config.fields.get("Game").unwrap().get("name").unwrap()
+                    ))
+                    .image(display_link)
+            })
         })
     }
 
@@ -129,27 +132,33 @@ impl<'s> Begin<'s> {
             .await;
 
         let begin = &Arc::new(Mutex::new(self));
+
         collector
             .for_each(|interaction| async move {
                 let mut begin = begin.lock().await;
-                begin.engine.next(false);
-                if begin.engine.next_until_renderable().is_some() {
+
+                let choice = match interaction.data.custom_id.as_str() {
+                    "right_page_select" => false,
+                    "first_choice_select" => true,
+                    "second_choice_select" => false,
+                    id => panic!("Cannot handle interaction custom_id {}", id),
+                };
+                begin.engine.next(choice);
+                if let Some(_) = begin.engine.next_until_renderable() {
                     begin.engine.render_to("resources/tmp.png");
+
                     let message = temp_channel
                         .send_files(http, vec!["resources/tmp.png"], |m| m)
                         .await
                         .expect("Cannot send file");
-
-                    if interaction.data.custom_id == "right_page_select" {
-                        interaction
-                            .create_interaction_response(http, |ir| {
-                                begin
-                                    .delegate_interaction_response(ir, &message.attachments[0].url)
-                                    .kind(InteractionResponseType::UpdateMessage)
-                            })
-                            .await
-                            .expect("Cannot update interaction");
-                    }
+                    interaction
+                        .create_interaction_response(http, |ir| {
+                            begin
+                                .delegate_interaction_response(ir, &message.attachments[0].url)
+                                .kind(InteractionResponseType::UpdateMessage)
+                        })
+                        .await
+                        .expect("Cannot update interaction");
                 }
             })
             .await;
