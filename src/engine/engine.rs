@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use super::{
     script::{ScriptContext, ScriptDirective},
-    Script,
+    Script, SpriteDirective,
 };
 use crate::Scene;
 
@@ -8,6 +10,7 @@ pub struct Engine<'a> {
     pub script: Script,
     pub iscript: usize,
     scene: &'a Scene<'a>,
+    sprites: HashMap<String, SpriteDirective>,
     bg: Option<String>,
 }
 
@@ -17,6 +20,7 @@ impl<'a> Engine<'a> {
             script: Script::from_file(script_path).expect("Cannot create script"),
             iscript: 0,
             scene,
+            sprites: HashMap::new(),
             bg: None,
         }
     }
@@ -43,11 +47,18 @@ impl<'a> Engine<'a> {
                             self.script = jump.endpoint.clone()
                         }
                     },
+                    ScriptDirective::Sprite(sprite) => {
+                        if !sprite.show {
+                            self.sprites.remove(&sprite.name);
+                        } else {
+                            self.sprites.insert(sprite.name.to_owned(), sprite.clone());
+                        }
+                        self.iscript += 1;
+                    }
                     ScriptDirective::LoadBG(bg) => {
                         self.bg = Some(bg.bg_path.to_owned());
                         self.iscript += 1;
                     }
-                    _ => panic!("Unsupported directive {:?}", directive),
                 }
             } else if let ScriptContext::Dialogue(_) = ctx {
                 self.iscript += 1;
@@ -83,6 +94,7 @@ impl<'a> Engine<'a> {
                 ScriptContext::Dialogue(dialogue) => Some(
                     self.scene.draw_dialogue(
                         self.bg.as_ref().map(|bg| bg.as_str()),
+                        self.sprites.values().collect::<Vec<_>>(),
                         &dialogue.character_name,
                         &dialogue
                             .dialogues

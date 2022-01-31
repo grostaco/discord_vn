@@ -1,6 +1,8 @@
 use image::{imageops::overlay, io::Reader, DynamicImage, ImageBuffer, Pixel, Rgba};
 use rusttype::{point, Font, Scale};
 
+use crate::engine::SpriteDirective;
+
 use super::{glyphs_width, size::Size};
 
 const WHITESPACE_PAD: u32 = 20;
@@ -17,6 +19,7 @@ impl<'a> Scene<'a> {
     pub fn draw_dialogue(
         &self,
         bg_path: Option<&str>,
+        sprites: Vec<&SpriteDirective>,
         character_name: &str,
         dialogue: &str,
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
@@ -32,6 +35,15 @@ impl<'a> Scene<'a> {
                 .unwrap();
 
             overlay(&mut image, &bg_img, 0, 0);
+        }
+
+        for sprite in sprites {
+            let sprite_img = Reader::open(&sprite.sprite_path)
+                .expect("Cannot load sprite")
+                .decode()
+                .unwrap();
+
+            overlay(&mut image, &sprite_img, sprite.x, sprite.y);
         }
 
         let character_name_glyphs = self
