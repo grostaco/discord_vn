@@ -1,7 +1,7 @@
 mod draw;
+mod scene;
 mod size;
-mod util;
 
-pub use draw::Scene;
+pub use draw::draw_text;
+pub use scene::Scene;
 pub use size::Size;
-pub use util::glyphs_width;
