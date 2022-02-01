@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fs, io};
+use std::{collections::HashMap, fs};
+
+use super::{ParseError, SyntaxError};
 
 #[derive(Debug)]
 pub struct Config {
@@ -6,7 +8,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_file(path: &str) -> Result<Self, io::Error> {
+    pub fn from_file(path: &str) -> Result<Self, ParseError> {
         let mut fields = HashMap::new();
         let mut last_key: Option<&str> = None;
 
@@ -17,12 +19,12 @@ impl Config {
 
             if line.chars().nth(0).unwrap() == '[' {
                 last_key = line.get(
-                    1..line.rfind("]").expect(&format!(
-                        "{}:{}:{} Expected closing ]",
-                        path,
-                        i,
-                        line.len()
-                    )),
+                    1..line.rfind("]").ok_or_else(|| SyntaxError {
+                        file: path.to_owned(),
+                        line: i,
+                        character: line.len(),
+                        why: "Expected closing ]",
+                    })?,
                 );
 
                 fields.insert(last_key.unwrap().to_owned(), HashMap::new());
@@ -34,12 +36,12 @@ impl Config {
                         .unwrap()
                         .insert(key.trim().to_string(), value.trim().to_string());
                 } else {
-                    panic!(
-                        "{}:{}:{} Key and values must be separated by =",
-                        path,
-                        i,
-                        line.len()
-                    );
+                    Err(SyntaxError {
+                        file: path.to_owned(),
+                        line: i,
+                        character: line.len(),
+                        why: "Key and values must be separated by =",
+                    })?;
                 }
             }
         }
