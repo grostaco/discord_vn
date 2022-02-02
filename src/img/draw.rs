@@ -31,56 +31,20 @@ pub fn draw_words<'a, 'i>(
                 ycur += glyphs_height;
             }
 
-            for xc in vec![-1, 1] {
-                for glyph in &glyphs {
-                    if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                        glyph.draw(|x, y, v| {
-                            let image_x =
-                                ((xcur + x + bounding_box.min.x as u32) as i32 + xc) as u32;
-                            let image_y = ycur + y + bounding_box.min.y as u32;
-
-                            let pixel = image.get_pixel(image_x, image_y);
-                            let pix = pixel.map2(shadow_color, |p, q| {
-                                ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
-                            });
-                            image.put_pixel(image_x, image_y, pix)
-                        })
-                    };
+            for xc in vec![-0.75, 0.75] {
+                for yc in vec![-0.75, 0.75] {
+                    draw_layout(
+                        image,
+                        &glyphs,
+                        shadow_color,
+                        xcur as f32 + xc as f32,
+                        ycur as f32 + yc as f32,
+                    );
                 }
             }
 
-            for yc in vec![-1, 1] {
-                for glyph in &glyphs {
-                    if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                        glyph.draw(|x, y, v| {
-                            let image_x = xcur + x + bounding_box.min.x as u32 as u32;
-                            let image_y =
-                                ((ycur + y + bounding_box.min.y as u32) as i32 + yc) as u32;
+            draw_layout(image, &glyphs, color, xcur as f32, ycur as f32);
 
-                            let pixel = image.get_pixel(image_x, image_y);
-                            let pix = pixel.map2(shadow_color, |p, q| {
-                                ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
-                            });
-                            image.put_pixel(image_x, image_y, pix)
-                        })
-                    };
-                }
-            }
-
-            for glyph in glyphs {
-                if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                    glyph.draw(|x, y, v| {
-                        let image_x = xcur + x + bounding_box.min.x as u32;
-                        let image_y = ycur + y + bounding_box.min.y as u32;
-
-                        let pixel = image.get_pixel(image_x, image_y);
-                        let pix = pixel.map2(&color, |p, q| {
-                            ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
-                        });
-                        image.put_pixel(image_x, image_y, pix)
-                    })
-                };
-            }
             xcur += width + WHITESPACE_PAD;
         }
     }
@@ -151,15 +115,51 @@ pub fn draw_text<'a, 'i>(
     image
 }
 
-pub fn glyphs_width(glyphs: &Vec<PositionedGlyph>) -> u32 {
-    let min_x = glyphs
+fn draw_layout<'a>(
+    image: &'a mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+    layout: &Vec<PositionedGlyph>,
+    color: &Rgba<u8>,
+    xoffset: f32,
+    yoffset: f32,
+) -> &'a mut ImageBuffer<Rgba<u8>, Vec<u8>> {
+    for glyph in layout {
+        if let Some(bounding_box) = glyph.pixel_bounding_box() {
+            glyph.draw(|x, y, v| {
+                let image_x = ((x + bounding_box.min.x as u32) as f32 + xoffset)
+                    .floor()
+                    .max(0.0) as u32;
+                let image_y = ((y + bounding_box.min.y as u32) as f32 + yoffset)
+                    .floor()
+                    .max(0.0) as u32;
+
+                let pixel = image.get_pixel(image_x, image_y);
+
+                let pix = pixel.map2(color, |p, q| {
+                    ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
+                });
+                image.put_pixel(image_x, image_y, pix)
+            })
+        }
+    }
+    image
+}
+
+#[inline]
+fn layout_width(layout: &Vec<PositionedGlyph>) -> (i32, i32) {
+    let min_x = layout
         .first()
         .map(|g| g.pixel_bounding_box().unwrap().min.x)
         .unwrap();
-    let max_x = glyphs
+    let max_x = layout
         .last()
         .map(|g| g.pixel_bounding_box().unwrap().max.x)
         .unwrap();
+    (min_x, max_x)
+}
+
+#[inline]
+pub fn glyphs_width(glyphs: &Vec<PositionedGlyph>) -> u32 {
+    let (min_x, max_x) = layout_width(glyphs);
     (max_x - min_x) as u32
 }
 
@@ -174,7 +174,7 @@ pub fn as_glyphs<'a>(
 
 pub fn load_sprite(path: &str) -> Result<DynamicImage, ImageError> {
     Reader::open(path).map_or_else(
-        |_| panic!("Cannot open background file {}", path),
+        |e| panic!("Cannot open background file {}", path),
         |r| r.decode(),
     )
 }
