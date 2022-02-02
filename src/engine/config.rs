@@ -13,7 +13,7 @@ impl Config {
         let mut last_key: Option<&str> = None;
 
         for (i, line) in fs::read_to_string(path)?.split("\n").enumerate() {
-            if line.len() == 0 {
+            if line.trim().len() == 0 {
                 continue;
             }
 
