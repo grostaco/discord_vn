@@ -174,7 +174,7 @@ pub fn as_glyphs<'a>(
 
 pub fn load_sprite(path: &str) -> Result<DynamicImage, ImageError> {
     Reader::open(path).map_or_else(
-        |e| panic!("Cannot open background file {}", path),
+        |_e| panic!("Cannot open background file {}", path),
         |r| r.decode(),
     )
 }
