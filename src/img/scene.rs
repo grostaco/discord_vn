@@ -1,5 +1,5 @@
-use image::{imageops::overlay, io::Reader, DynamicImage, ImageBuffer, Pixel, Rgba};
-use rusttype::{point, Font, Point, Scale};
+use image::{imageops::overlay, DynamicImage, ImageBuffer, Pixel, Rgba};
+use rusttype::{point, Font, Scale};
 
 use crate::engine::SpriteDirective;
 
@@ -85,23 +85,23 @@ impl<'a> Scene<'a> {
             overlay(&mut image, &bg_img, 0, 0);
         }
 
-        let a_width = glyphs_width(&as_glyphs(
+        let a_glyphs = &as_glyphs(
             choices.0,
             &self.font,
             self.scale,
-            Point { x: 0.0, y: 0.0 },
-        ));
-        let adjusted_a_width = glyphs_width(&as_glyphs(
-            choices.0,
+            point(self.screen.xmax as f32 / 2.0, self.screen.ymax as f32 / 4.0),
+        );
+        let a_width = glyphs_width(a_glyphs);
+        let b_glyphs = &as_glyphs(
+            choices.1,
             &self.font,
-            Scale {
-                x: self.scale.x * 1.05,
-                y: self.scale.y * 1.05,
-            },
-            Point { x: 0.0, y: 0.0 },
-        ));
-
-        //let b_width = glyphs_width(&choice_b_glyphs);
+            self.scale,
+            point(
+                self.screen.xmax as f32 / 2.0,
+                self.screen.ymax as f32 / 4.0 + v_metrics.ascent * 5.0,
+            ),
+        );
+        let b_width = glyphs_width(b_glyphs);
 
         draw_text(
             choices.0,
@@ -116,70 +116,43 @@ impl<'a> Scene<'a> {
             ),
         );
 
-        /*
-               for glyph in &choice_a_glyphs {
-                   if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                       glyph.draw(|x, y, v| {
-                           let image_x = x + bounding_box.min.x as u32;
-                           let image_y = y + bounding_box.min.y as u32;
+        let min_x = a_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().min.x)
+            .unwrap() as u32;
+        let max_y = a_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().max.y)
+            .unwrap() as u32;
+        for x in min_x - a_width / 2..self.screen.xmax - (min_x - a_width / 2) {
+            image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *white);
+        }
 
-                           let pixel = image.get_pixel(image_x - a_width / 2, image_y);
-                           let pix = pixel.map2(&color, |p, q| {
-                               ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
-                           });
-                           image.put_pixel(
-                               x + bounding_box.min.x as u32 - a_width / 2,
-                               y + bounding_box.min.y as u32,
-                               pix,
-                           );
-                       });
-                   }
-               }
-               let min_x = choice_a_glyphs
-                   .first()
-                   .map(|g| g.pixel_bounding_box().unwrap().min.x)
-                   .unwrap() as u32;
-               let max_y = choice_a_glyphs
-                   .first()
-                   .map(|g| g.pixel_bounding_box().unwrap().max.y)
-                   .unwrap() as u32;
+        draw_text(
+            choices.1,
+            &white,
+            &black,
+            &mut image,
+            &self.font,
+            self.scale,
+            point(
+                self.screen.xmax as f32 / 2.0 - b_width as f32 / 2.0,
+                self.screen.ymax as f32 / 4.0 + v_metrics.ascent * 5.0,
+            ),
+        );
 
-               for x in min_x - a_width / 2..self.screen.xmax - (min_x - a_width / 2) {
-                   image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *color);
-               }
+        let min_x = b_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().min.x)
+            .unwrap() as u32;
+        let max_y = b_glyphs
+            .first()
+            .map(|g| g.pixel_bounding_box().unwrap().max.y)
+            .unwrap() as u32;
+        for x in min_x - b_width / 2..self.screen.xmax - (min_x - b_width / 2) {
+            image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *white);
+        }
 
-               for glyph in &choice_b_glyphs {
-                   if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                       glyph.draw(|x, y, v| {
-                           let image_x = x + bounding_box.min.x as u32;
-                           let image_y = y + bounding_box.min.y as u32;
-
-                           let pixel = image.get_pixel(image_x - b_width / 2, image_y);
-                           let pix = pixel.map2(&color, |p, q| {
-                               ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
-                           });
-                           image.put_pixel(
-                               x + bounding_box.min.x as u32 - b_width / 2,
-                               y + bounding_box.min.y as u32,
-                               pix,
-                           );
-                       });
-                   }
-               }
-
-               let min_x = choice_b_glyphs
-                   .first()
-                   .map(|g| g.pixel_bounding_box().unwrap().min.x)
-                   .unwrap() as u32;
-               let max_y = choice_b_glyphs
-                   .first()
-                   .map(|g| g.pixel_bounding_box().unwrap().max.y)
-                   .unwrap() as u32;
-
-               for x in min_x - b_width / 2..self.screen.xmax - (min_x - b_width / 2) {
-                   image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *color);
-               }
-        */
         image
     }
 }
