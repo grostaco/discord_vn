@@ -26,11 +26,30 @@ pub struct SyntaxError {
 from_error!(io::Error, ParseError, IoError);
 from_error!(SyntaxError, ParseError, SyntaxError);
 
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SyntaxError(syn) => write!(f, "{}", syn),
+            Self::IoError(io) => write!(f, "{}", io),
+        }
+    }
+}
+
 impl fmt::Debug for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}:{}:{} {}",
+            self.file, self.line, self.character, self.why
+        )
+    }
+}
+
+impl fmt::Display for SyntaxError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Error on file {} line {} character {}: {}",
             self.file, self.line, self.character, self.why
         )
     }
