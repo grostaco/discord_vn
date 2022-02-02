@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, io};
 
 use super::{
     script::{ScriptContext, ScriptDirective},
@@ -15,14 +15,14 @@ pub struct Engine<'a> {
 }
 
 impl<'a> Engine<'a> {
-    pub fn from_file(script_path: &str, scene: &'a Scene<'a>) -> Self {
-        Self {
-            script: Script::from_file(script_path).expect("Cannot create script"),
+    pub fn from_file(script_path: &str, scene: &'a Scene<'a>) -> Result<Self, io::Error> {
+        Ok(Self {
+            script: Script::from_file(script_path)?,
             iscript: 0,
             scene,
             sprites: HashMap::new(),
             bg: None,
-        }
+        })
     }
 
     pub fn current(&self) -> Option<&ScriptContext> {

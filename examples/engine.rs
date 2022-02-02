@@ -28,7 +28,8 @@ fn main() {
         },
     };
 
-    let mut engine = Engine::from_file("resources/script.txt", &s);
+    let mut engine =
+        Engine::from_file("resources/script.txt", &s).expect("Cannot construct engine");
 
     while let Some(_) = engine.current() {
         engine.render_to(&format!(
