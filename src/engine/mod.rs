@@ -1,8 +1,8 @@
-mod config;
-mod directives;
-mod engine;
-mod errors;
-mod script;
+pub mod config;
+pub mod directives;
+pub mod engine;
+pub mod errors;
+pub mod script;
 
 pub use config::Config;
 pub use directives::*;
