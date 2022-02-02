@@ -28,7 +28,7 @@ impl<'s> Begin<'s> {
     pub fn new(config_file: &str, script_file: &str, scene: &'s Scene<'s>) -> Self {
         Self {
             config: Config::from_file(config_file).expect("Unable to load config file"),
-            engine: Engine::from_file(script_file, scene),
+            engine: Engine::from_file(script_file, scene).expect("Cannot initialize engine"),
         }
     }
 
