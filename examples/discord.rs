@@ -39,8 +39,18 @@ async fn main() {
         .parse()
         .expect("Application id is not a valid id");
 
+    let guild_id: u64 = env::var("GUILD_ID")
+        .expect("Expected an guild id in the environment")
+        .parse()
+        .expect("Guild id is not a valid id");
+
     let mut client = Client::builder(token)
-        .event_handler(Handler { scene })
+        .event_handler(Handler {
+            config_path: "resources/config.conf".to_owned(),
+            script_path: "resources/script.txt".to_owned(),
+            guild_id,
+            scene,
+        })
         .application_id(application_id)
         .await
         .expect("Error creating client");
