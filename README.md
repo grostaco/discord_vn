@@ -79,7 +79,7 @@ John is saying something in the living room with him being at the exact center
 John is saying something in the living room with him being at the exact center
 [John]
 I am going to head to the next room
-[!meta sprite(john,resources/sprites/john.png,320,240,hide)]
+[!meta sprite(john,hide)]
 [John]
 I am already out of the room, follow me!
 [!meta jump(resources/scripts/script2.txt)]
