@@ -27,6 +27,7 @@ impl<'a> Scene<'a> {
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
+
         let white = Rgba::from_slice(&[255, 255, 255, 255]);
         let black = Rgba::from_slice(&[0, 0, 0, 255]);
 
@@ -36,8 +37,15 @@ impl<'a> Scene<'a> {
         }
 
         for sprite in sprites {
-            let sprite_img = load_sprite(&sprite.sprite_path).expect("Unable to load sprite");
-            overlay(&mut image, &sprite_img, sprite.x, sprite.y);
+            if let Some(sprite_path) = &sprite.sprite_path {
+                let sprite_img = load_sprite(sprite_path).expect("Unable to load sprite");
+                overlay(
+                    &mut image,
+                    &sprite_img,
+                    sprite.x.unwrap(),
+                    sprite.y.unwrap(),
+                );
+            }
         }
 
         draw_text(
