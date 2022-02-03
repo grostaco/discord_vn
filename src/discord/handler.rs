@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use serenity::{
     async_trait,
     client::{Context, EventHandler},
@@ -25,6 +27,10 @@ impl<'a> EventHandler for Handler<'a> {
                     self.script_path.as_str(),
                     &self.scene,
                 )
+                .unwrap_or_else(|e| {
+                    eprintln!("{}", e);
+                    exit(1);
+                })
                 .handle_interaction(&ctx.http, command, &ctx.shard)
                 .await
                 .expect("Cannot run begin command"),
