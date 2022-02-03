@@ -51,7 +51,7 @@ Meta direcitves are powerful commands to control the environment of the script. 
 | jump      | path                | Unconditionally jumps to the script file at path|
 | jump      | text,text,path      | Render two text choices and jump to script file at `path` if the first argument is chosen|
 | sprite | text,path,int,int,show | Create a sprite with the first argument's name from path with the third and forth argument horizontal and vertical placement of the sprite respectively.
-| sprite | text,path,int,int,hide | Hide the sprite with the first argument's name
+| sprite | text,hide | Hide the sprite with the first argument's name
 
 The screen size is set at exactly 640x480, images and sprite positioning should match this.
 
