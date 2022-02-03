@@ -23,7 +23,7 @@ impl Config {
                         file: path.to_owned(),
                         line: i,
                         character: line.len(),
-                        why: "Expected closing ]",
+                        why: "Expected closing ]".to_string(),
                     })?,
                 );
 
@@ -40,7 +40,7 @@ impl Config {
                         file: path.to_owned(),
                         line: i,
                         character: line.len(),
-                        why: "Key and values must be separated by =",
+                        why: "Key and values must be separated by =".to_string(),
                     })?;
                 }
             }
