@@ -84,11 +84,28 @@ impl<'s> Begin<'s> {
             })
             .create_embed(|embed| {
                 embed
-                    .title("Gary's VN Engine")
-                    .description(&format!(
+                    .title(&format!(
                         "You are currently playing {}",
                         self.config.fields.get("Game").unwrap().get("name").unwrap()
                     ))
+                    .description(&match self.engine.current().unwrap() {
+                        ScriptContext::Dialogue(dialogue) => format!(
+                            "{}: {}",
+                            dialogue.character_name,
+                            dialogue.dialogues.join(" ")
+                        ),
+                        ScriptContext::Directive(directive) => {
+                            if let ScriptDirective::Jump(jump) = directive {
+                                format!(
+                                    "You are presented with two choices:\n[1] {}\n[2] {}",
+                                    jump.choices.as_ref().unwrap().0,
+                                    jump.choices.as_ref().unwrap().1
+                                )
+                            } else {
+                                panic!("Unexpected directive found during discord rendering")
+                            }
+                        }
+                    })
                     .image(display_link)
             })
         })
