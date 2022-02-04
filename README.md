@@ -1,5 +1,16 @@
 # Discord VN Engine
 A visual novel scripting language which renders as interactable components on discord. 
+
+Table of contents
+- [Usage](#usage)
+    - [Installation](#installation)
+        - [Windows](#windows)
+        - [Linux](#linux-and-macos)
+        - [MacOS](#linux-and-macos)
+- [Scripting](#scripting)
+    - [Dialogue](#dialogue)
+    - [Directives](#directives)
+    - [Examples](#examples)
 # Usage
 
 ## Installation
@@ -55,7 +66,7 @@ Meta direcitves are powerful commands to control the environment of the script. 
 
 The screen size is set at exactly 640x480, images and sprite positioning should match this.
 
-Examples:
+## Examples
 
 ```ini
 [!meta loadbg(resources/bgs/living_room.png)]
