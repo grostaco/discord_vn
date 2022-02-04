@@ -4,7 +4,7 @@ A visual novel scripting language which renders as interactable components on di
 
 ## Installation
 ### Windows
-- Download the latest release from [here](https://github.com/grostaco/discord_vn/releases/tag/1.0.0)
+- Download the latest release from [here](https://github.com/grostaco/discord_vn/releases/latest/download/discord.zip)
 - Go to [Discord's developer applications](https://discord.com/developers/applications)
     - Create a new application
     - Click `add bot` in the bot section
@@ -28,6 +28,7 @@ cargo run --bin discord
 ```
 
 # Scripting
+For testing scripts, it is recommended to use the engine environment available for download here [here](https://github.com/grostaco/discord_vn/releases/latest/download/discord.zip).
 ## Dialogue
 
 To create a dialogue, the format goes as follow
