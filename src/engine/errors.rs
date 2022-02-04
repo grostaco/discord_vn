@@ -1,20 +1,6 @@
-use std::{fmt, io};
+use std::fmt::Debug;
 
-macro_rules! from_error {
-    ($from:ty,$to:ty,$variant:tt) => {
-        impl From<$from> for $to {
-            fn from(error: $from) -> Self {
-                <$to>::$variant(error)
-            }
-        }
-    };
-}
-
-#[derive(Debug)]
-pub enum ParseError {
-    SyntaxError(SyntaxError),
-    IoError(io::Error),
-}
+use thiserror::Error;
 
 #[derive(Debug)]
 pub struct SyntaxError {
@@ -29,12 +15,29 @@ pub struct DirectiveError {
     pub why: &'static str,
 }
 
-#[derive(Debug)]
-pub enum ScriptError {
-    DirectiveError(DirectiveError),
-    IoError(io::Error),
-    SyntaxError(SyntaxError),
+#[derive(Error, Debug)]
+pub enum ParseError {
+    #[error("Unknown directive {0}")]
+    UnknownDirective(String),
+    #[error("Directive {0} cannot handle argument {1}")]
+    DirectiveError(&'static str, String),
+    #[error("Cannot open file {0}")]
+    NoFileExists(String),
+    #[error("Error on file {0} line {1} character {2}: {3}")]
+    SyntaxError(String, usize, usize, String),
 }
+
+/*
+macro_rules! from_error {
+    ($from:ty,$to:ty,$variant:tt) => {
+        impl From<$from> for $to {
+            fn from(error: $from) -> Self {
+                <$to>::$variant(error)
+            }
+        }
+    };
+}
+
 
 from_error!(io::Error, ParseError, IoError);
 from_error!(SyntaxError, ParseError, SyntaxError);
@@ -76,3 +79,4 @@ impl fmt::Display for SyntaxError {
         )
     }
 }
+*/

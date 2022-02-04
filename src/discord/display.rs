@@ -15,7 +15,7 @@ use serenity::{
 };
 
 use crate::{
-    engine::{ScriptContext, ScriptDirective, ScriptError},
+    engine::{ParseError, ScriptContext, ScriptDirective},
     Config, Engine, Scene,
 };
 
@@ -29,9 +29,9 @@ impl<'s> Begin<'s> {
         config_file: &str,
         script_file: &str,
         scene: &'s Scene<'s>,
-    ) -> Result<Self, ScriptError> {
+    ) -> Result<Self, ParseError> {
         Ok(Self {
-            config: Config::from_file(config_file).unwrap(),
+            config: Config::from_file(config_file)?,
             engine: Engine::from_file(script_file, scene)?,
         })
     }

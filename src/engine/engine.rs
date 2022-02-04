@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{
     script::{ScriptContext, ScriptDirective},
-    Script, ScriptError, SpriteDirective,
+    ParseError, Script, SpriteDirective,
 };
 use crate::Scene;
 
@@ -15,7 +15,7 @@ pub struct Engine<'a> {
 }
 
 impl<'a> Engine<'a> {
-    pub fn from_file(script_path: &str, scene: &'a Scene<'a>) -> Result<Self, ScriptError> {
+    pub fn from_file(script_path: &str, scene: &'a Scene<'a>) -> Result<Self, ParseError> {
         Ok(Self {
             script: Script::from_file(script_path)?,
             iscript: 0,

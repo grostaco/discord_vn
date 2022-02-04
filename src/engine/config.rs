@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, io};
 
-use super::{ParseError, SyntaxError};
+use super::ParseError;
 
 #[derive(Debug)]
 pub struct Config {
@@ -12,19 +12,29 @@ impl Config {
         let mut fields = HashMap::new();
         let mut last_key: Option<&str> = None;
 
-        for (i, line) in fs::read_to_string(path)?.split("\n").enumerate() {
+        for (i, line) in fs::read_to_string(path)
+            .map_err(|e| match e {
+                _ if e.kind() == io::ErrorKind::NotFound => {
+                    ParseError::NoFileExists(path.to_owned())
+                }
+                _ => panic!("Cannot open file {} because {}", path, e),
+            })?
+            .split("\n")
+            .enumerate()
+            .map(|(i, line)| (i + 1, line))
+        {
             if line.trim().len() == 0 {
                 continue;
             }
 
             if line.chars().nth(0).unwrap() == '[' {
                 last_key = line.get(
-                    1..line.rfind("]").ok_or_else(|| SyntaxError {
-                        file: path.to_owned(),
-                        line: i,
-                        character: line.len(),
-                        why: "Expected closing ]".to_string(),
-                    })?,
+                    1..line.rfind("]").ok_or(ParseError::SyntaxError(
+                        path.to_string(),
+                        i,
+                        line.len(),
+                        "Expected closing ]".into(),
+                    ))?,
                 );
 
                 fields.insert(last_key.unwrap().to_owned(), HashMap::new());
@@ -36,12 +46,12 @@ impl Config {
                         .unwrap()
                         .insert(key.trim().to_string(), value.trim().to_string());
                 } else {
-                    Err(SyntaxError {
-                        file: path.to_owned(),
-                        line: i,
-                        character: line.len(),
-                        why: "Key and values must be separated by =".to_string(),
-                    })?;
+                    return Err(ParseError::SyntaxError(
+                        path.to_string(),
+                        i,
+                        line.len(),
+                        "Values must be separated by =".into(),
+                    ));
                 }
             }
         }

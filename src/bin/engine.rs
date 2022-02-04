@@ -112,7 +112,7 @@ fn main() {
         }
         Err(e) => {
             println!("[!] {}", e);
-            println!("[!] Cannot initialize scripts.txt. Aborting.");
+            println!("[!] Cannot initialize script.txt. Aborting.");
             exit(0);
         }
     }

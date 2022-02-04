@@ -503,6 +503,7 @@ dependencies = [
  "image",
  "rusttype",
  "serenity",
+ "thiserror",
  "tokio",
 ]
 
