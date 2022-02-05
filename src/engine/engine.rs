@@ -67,6 +67,19 @@ impl<'a> Engine<'a> {
         self.script.ctx.get(self.iscript)
     }
 
+    pub fn next_until<P>(&mut self, predicate: P) -> Option<&ScriptContext>
+    where
+        P: Fn(&ScriptContext) -> bool,
+    {
+        while let Some(context) = self.current() {
+            if predicate(context) {
+                break;
+            }
+            self.next(false);
+        }
+        self.current()
+    }
+
     pub fn next_until_renderable(&mut self) -> Option<&ScriptContext> {
         while let Some(context) = self.current() {
             match context {
