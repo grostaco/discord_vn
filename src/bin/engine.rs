@@ -5,7 +5,7 @@ use std::{
 
 use image_rpg::{
     engine::{ScriptContext, ScriptDirective},
-    Engine, Scene, Size,
+    Config, Engine, Scene, Size,
 };
 use rusttype::{Font, Scale};
 
@@ -39,8 +39,15 @@ fn main() {
             ymax: 480,
         },
     };
-    println!("[*] Engine initializing, searching for script.txt");
-    match Engine::from_file("script.txt", &scene) {
+    let config = Config::from_file("resources/config.conf").unwrap();
+    let script_path = config
+        .fields
+        .get("Path")
+        .unwrap()
+        .get("script_path")
+        .unwrap();
+    println!("[*] Engine initializing, searching for {}", script_path);
+    match Engine::from_file(script_path.as_str(), &scene) {
         Ok(mut engine) => {
             println!("[*] Engine initialized. Rendering...");
             println!("[!] It should be noted that if there are conditional jumps in the script, you will be prompted.");
@@ -95,6 +102,9 @@ fn main() {
                             } else {
                                 println!("[*] Unloading sprite {}", sprite.name)
                             }
+                        }
+                        ScriptDirective::Custom(custom) => {
+                            println!("[*] Ignoring custom directive {:#?}", custom)
                         }
                     },
                 };
