@@ -59,6 +59,9 @@ impl<'a> Engine<'a> {
                         self.bg = Some(bg.bg_path.to_owned());
                         self.iscript += 1;
                     }
+                    ScriptDirective::Custom(_) => {
+                        self.iscript += 1;
+                    }
                 }
             } else if let ScriptContext::Dialogue(_) = ctx {
                 self.iscript += 1;

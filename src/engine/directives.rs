@@ -112,7 +112,7 @@ impl Directive for LoadBGDirective {
 
 impl Directive for CustomDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
-        let directive_iend = ctx.find(')').ok_or(ParseError::DirectiveError(
+        let directive_iend = ctx.find('(').ok_or(ParseError::DirectiveError(
             "custom",
             "expected opening (".into(),
         ))?;

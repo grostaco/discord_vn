@@ -1,6 +1,6 @@
 use super::{
     directives::{Directive, JumpDirective, LoadBGDirective, SpriteDirective},
-    ParseError,
+    CustomDirective, ParseError,
 };
 use std::{fmt::Debug, fs, io};
 #[derive(Clone, Debug)]
@@ -30,6 +30,7 @@ pub enum ScriptDirective {
     Jump(JumpDirective),
     Sprite(SpriteDirective),
     LoadBG(LoadBGDirective),
+    Custom(CustomDirective),
 }
 
 macro_rules! to_syntax_error {
@@ -100,6 +101,12 @@ impl Script {
                             "loadbg" => ScriptDirective::LoadBG(
                                 LoadBGDirective::from_context(context).unwrap(),
                             ),
+                            "custom" => ScriptDirective::Custom(to_syntax_error!(
+                                CustomDirective::from_context(context),
+                                path.to_string(),
+                                i,
+                                line.len()
+                            )?),
 
                             directive => Err(ParseError::SyntaxError(
                                 path.to_string(),
@@ -115,7 +122,7 @@ impl Script {
                         dialogues: Vec::new(),
                     }))
                 }
-            } else if line.len() != 0 {
+            } else if line.trim().len() != 0 {
                 // the rest here must be dialogues
                 match ctx.last_mut().ok_or(ParseError::SyntaxError(
                     path.to_string(),
