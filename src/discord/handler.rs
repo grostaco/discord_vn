@@ -31,7 +31,7 @@ impl<'a> EventHandler for Handler<'a> {
                     eprintln!("{}", e);
                     exit(1);
                 })
-                .handle_interaction(&ctx.http, command, &ctx.shard)
+                .handle_interaction(&ctx.http, &ctx, command, &ctx.shard)
                 .await
                 .expect("Cannot run begin command"),
                 _ => panic!("Unable to handle command!"),

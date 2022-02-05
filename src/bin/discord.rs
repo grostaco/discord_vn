@@ -3,6 +3,7 @@ use std::process::exit;
 use image_rpg::{Config, Handler, Scene, Size};
 use rusttype::{Font, Scale};
 use serenity::Client;
+use songbird::SerenityInit;
 
 macro_rules! log {
     (dbg,$x:expr) => {
@@ -94,6 +95,7 @@ async fn main() {
             scene,
         })
         .application_id(application_id)
+        .register_songbird()
         .await
         .expect("Error creating client");
 

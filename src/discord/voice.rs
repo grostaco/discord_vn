@@ -5,7 +5,7 @@ use serenity::{
 use songbird::input::restartable::Restartable;
 use std::sync::Arc;
 
-use super::PlayError;
+use super::errors::PlayError;
 
 macro_rules! cast {
     ($target: expr, $pat: path) => {{
@@ -25,8 +25,8 @@ macro_rules! cast_opt {
 
 pub async fn play_url(
     ctx: &Context,
-    channel_id: u64,
     guild_id: u64,
+    channel_id: u64,
     url: &str,
 ) -> Result<(), PlayError> {
     if !url.starts_with("http") {
@@ -35,7 +35,7 @@ pub async fn play_url(
 
     let manager = songbird::get(ctx)
         .await
-        .ok_or(PlayError::SongbirdError)?
+        .ok_or(PlayError::Unregistered)?
         .clone();
     let _result = manager.join(guild_id, channel_id).await;
 
@@ -53,7 +53,7 @@ pub async fn play_url(
 
     Ok(())
 }
-
+/*
 pub async fn play(
     http: &Arc<Http>,
     ctx: &Context,
@@ -73,11 +73,11 @@ pub async fn play(
 
     aci.create_interaction_response(http, |r| r.interaction_response_data(|d| d.content("A")))
         .await
-        .map_err(|e| PlayError::SerenityError(e))?;
+        .unwrap();
 
     let manager = songbird::get(ctx)
         .await
-        .ok_or(PlayError::SongbirdError)?
+        .ok_or(PlayError::Unregistered)?
         .clone();
     let _result = manager.join(887345509990285312, 887345509990285316).await;
 
@@ -94,3 +94,4 @@ pub async fn play(
 
     Ok(())
 }
+ */
