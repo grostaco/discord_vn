@@ -15,6 +15,10 @@ branch = "next"
 default-features = false
 features = ["builder", "cache", "client", "gateway", "model", "utils", "rustls_backend", "unstable_discord_api", "collector"]
 
+[dependencies.songbird]
+git = "https://github.com/serenity-rs/songbird"
+branch = "next"
+features = ["driver", "serenity-rustls", "youtube-dlc"]
 [dependencies.tokio]
 version = "1"
 features = ["full"]
