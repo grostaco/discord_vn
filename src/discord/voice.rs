@@ -1,27 +1,7 @@
-use serenity::{
-    client::Context, http::Http, json::Value,
-    model::interactions::application_command::ApplicationCommandInteraction,
-};
+use serenity::client::Context;
 use songbird::input::restartable::Restartable;
-use std::sync::Arc;
 
 use super::errors::PlayError;
-
-macro_rules! cast {
-    ($target: expr, $pat: path) => {{
-        if let $pat(a) = $target {
-            a
-        } else {
-            panic!("mismatch variant when cast to {}", stringify!($pat))
-        }
-    }};
-}
-
-macro_rules! cast_opt {
-    ($target: expr, $pat: path) => {
-        $target.map_or(None, |value| Some(cast!(value, $pat)))
-    };
-}
 
 pub async fn play_url(
     ctx: &Context,
@@ -54,6 +34,24 @@ pub async fn play_url(
     Ok(())
 }
 /*
+use std::sync::Arc;
+
+macro_rules! cast {
+    ($target: expr, $pat: path) => {{
+        if let $pat(a) = $target {
+            a
+        } else {
+            panic!("mismatch variant when cast to {}", stringify!($pat))
+        }
+    }};
+}
+
+macro_rules! cast_opt {
+    ($target: expr, $pat: path) => {
+        $target.map_or(None, |value| Some(cast!(value, $pat)))
+    };
+}
+
 pub async fn play(
     http: &Arc<Http>,
     ctx: &Context,
