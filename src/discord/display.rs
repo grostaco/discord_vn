@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use serenity::{
     builder::{CreateComponents, CreateInteractionResponse},
-    client::bridge::gateway::ShardMessenger,
+    client::{bridge::gateway::ShardMessenger, Context},
     futures::StreamExt,
     http::Http,
     model::{
@@ -19,6 +19,9 @@ use crate::{
     Config, Engine, Scene,
 };
 
+use super::voice::play_url;
+
+struct PlayInfo(u64, u64, String);
 pub struct Begin<'s> {
     config: Config,
     engine: Engine<'s>,
@@ -114,6 +117,7 @@ impl<'s> Begin<'s> {
     pub async fn handle_interaction(
         &mut self,
         http: &Arc<Http>,
+        context: &Context,
         interaction: ApplicationCommandInteraction,
         shard_messenger: &ShardMessenger,
     ) -> Result<(), serenity::Error> {
@@ -127,9 +131,43 @@ impl<'s> Begin<'s> {
                 .parse()
                 .expect("image_channel must be an integer"),
         );
-        let ctx = self.engine.next_until_renderable();
 
-        if ctx.is_none() {
+        let renderable = |ctx: &ScriptContext| match ctx {
+            ScriptContext::Dialogue(_) => true,
+            ScriptContext::Directive(directive) => match directive {
+                ScriptDirective::Jump(jump) if jump.choices.is_some() => true,
+                ScriptDirective::Custom(custom) if custom.name == "play" => true,
+                _ => false,
+            },
+        };
+        let mut play_info: Option<PlayInfo> = None;
+
+        while let Some(ctx) = self.engine.next_until(renderable) {
+            if let ScriptContext::Directive(ScriptDirective::Custom(custom)) = ctx {
+                let guild_id = custom
+                    .args
+                    .get(0)
+                    .expect("Guild id expected for play")
+                    .parse()
+                    .expect("Guild id must be an integer");
+                let channel_id = custom
+                    .args
+                    .get(1)
+                    .expect("Channel id expected for play")
+                    .parse()
+                    .expect("Channel id must be an integer");
+
+                play_info = Some(PlayInfo(
+                    guild_id,
+                    channel_id,
+                    custom.args.get(2).expect("URL not provided").to_string(),
+                ));
+                self.engine.next(false);
+            } else {
+                break;
+            }
+        }
+        if self.engine.current().is_none() {
             return Ok(());
         }
 
@@ -145,6 +183,12 @@ impl<'s> Begin<'s> {
             })
             .await
             .expect("Unable to create interaction");
+
+        if let Some(play_info) = play_info.take() {
+            play_url(context, play_info.0, play_info.1, &play_info.2)
+                .await
+                .expect("Cannot play URL");
+        }
         let mut collector = interaction
             .get_interaction_response(http)
             .await?
@@ -160,6 +204,32 @@ impl<'s> Begin<'s> {
             };
             self.engine.next(choice);
             if let Some(_ctx) = self.engine.next_until_renderable() {
+                while let Some(ctx) = self.engine.next_until(renderable) {
+                    if let ScriptContext::Directive(ScriptDirective::Custom(custom)) = ctx {
+                        let guild_id = custom
+                            .args
+                            .get(0)
+                            .expect("Guild id expected for play")
+                            .parse()
+                            .expect("Guild id must be an integer");
+                        let channel_id = custom
+                            .args
+                            .get(1)
+                            .expect("Channel id expected for play")
+                            .parse()
+                            .expect("Channel id must be an integer");
+
+                        play_info = Some(PlayInfo(
+                            guild_id,
+                            channel_id,
+                            custom.args.get(2).expect("URL not provided").to_string(),
+                        ));
+                        self.engine.next(false);
+                    } else {
+                        break;
+                    }
+                }
+                //println!("{:#?}", self.engine.current());
                 self.engine.render_to("resources/tmp.png");
 
                 let message = temp_channel
@@ -172,6 +242,11 @@ impl<'s> Begin<'s> {
                 })
                 .await
                 .expect("Cannot update interaction");
+                if let Some(play_info) = play_info.take() {
+                    play_url(context, play_info.0, play_info.1, &play_info.2)
+                        .await
+                        .expect("Cannot play URL");
+                }
             } else {
                 mci.create_interaction_response(http, |ir| {
                     ir.interaction_response_data(|ird| {
