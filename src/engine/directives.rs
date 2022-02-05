@@ -24,6 +24,12 @@ pub struct LoadBGDirective {
     pub bg_path: String,
 }
 
+#[derive(Clone, Debug)]
+pub struct CustomDirective {
+    pub name: String,
+    pub args: Vec<String>,
+}
+
 impl Directive for JumpDirective {
     /// Return a jump directive from context
     /// "A", "B", endpoint.script to jump to endpoint.script if A is taken or
@@ -100,6 +106,28 @@ impl Directive for LoadBGDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
         Ok(Self {
             bg_path: ctx.to_string(),
+        })
+    }
+}
+
+impl Directive for CustomDirective {
+    fn from_context(ctx: &str) -> Result<Self, ParseError> {
+        let directive_iend = ctx.find(')').ok_or(ParseError::DirectiveError(
+            "custom",
+            "expected opening (".into(),
+        ))?;
+        let directive = ctx.get(..directive_iend).unwrap().to_string();
+        let args = ctx
+            .get(directive_iend + 1..ctx.len() - 1)
+            .unwrap()
+            .split(",")
+            .map(str::trim)
+            .map(str::to_string)
+            .collect();
+
+        Ok(Self {
+            name: directive,
+            args,
         })
     }
 }
