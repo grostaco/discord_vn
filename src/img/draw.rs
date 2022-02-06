@@ -1,7 +1,7 @@
 use image::{io::Reader, DynamicImage, ImageBuffer, ImageError, Pixel, Rgba};
 use rusttype::{Font, Point, PositionedGlyph, Scale};
 
-const WHITESPACE_PAD: u32 = 20;
+const WHITESPACE_PAD: u32 = 16;
 
 pub fn draw_words<'a, 'i>(
     text: &str,
