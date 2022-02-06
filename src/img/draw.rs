@@ -6,7 +6,6 @@ const WHITESPACE_PAD: u32 = 16;
 pub fn draw_words<'a, 'i>(
     text: &str,
     color: &Rgba<u8>,
-    shadow_color: &Rgba<u8>,
     image: &'i mut ImageBuffer<Rgba<u8>, Vec<u8>>,
     font: &Font<'a>,
     scale: Scale,
@@ -31,18 +30,6 @@ pub fn draw_words<'a, 'i>(
                 ycur += glyphs_height;
             }
 
-            for xc in vec![-0.75, 0.75] {
-                for yc in vec![-0.75, 0.75] {
-                    draw_layout(
-                        image,
-                        &glyphs,
-                        shadow_color,
-                        xcur as f32 + xc as f32,
-                        ycur as f32 + yc as f32,
-                    );
-                }
-            }
-
             draw_layout(image, &glyphs, color, xcur as f32, ycur as f32);
 
             xcur += width + WHITESPACE_PAD;
@@ -55,47 +42,12 @@ pub fn draw_words<'a, 'i>(
 pub fn draw_text<'a, 'i>(
     text: &str,
     color: &Rgba<u8>,
-    shadow_color: &Rgba<u8>,
     image: &'i mut ImageBuffer<Rgba<u8>, Vec<u8>>,
     font: &Font<'a>,
     scale: Scale,
     point: Point<f32>,
 ) -> &'i mut ImageBuffer<Rgba<u8>, Vec<u8>> {
     let glyphs: Vec<_> = font.layout(text, scale, point).collect();
-
-    for xc in vec![-1, 1] {
-        for glyph in &glyphs {
-            if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                glyph.draw(|x, y, v| {
-                    let image_x = ((x + bounding_box.min.x as u32) as i32 + xc) as u32;
-                    let image_y = y + bounding_box.min.y as u32;
-
-                    let pixel = image.get_pixel(image_x, image_y);
-                    let pix = pixel.map2(shadow_color, |p, q| {
-                        ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
-                    });
-                    image.put_pixel(image_x, image_y, pix)
-                })
-            };
-        }
-    }
-
-    for yc in vec![-1, 1] {
-        for glyph in &glyphs {
-            if let Some(bounding_box) = glyph.pixel_bounding_box() {
-                glyph.draw(|x, y, v| {
-                    let image_x = x + bounding_box.min.x as u32;
-                    let image_y = ((y + bounding_box.min.y as u32) as i32 + yc) as u32;
-
-                    let pixel = image.get_pixel(image_x, image_y);
-                    let pix = pixel.map2(shadow_color, |p, q| {
-                        ((p as f32 * (1.0 - v) + q as f32 * v) as u8).clamp(0, 255)
-                    });
-                    image.put_pixel(image_x, image_y, pix)
-                })
-            };
-        }
-    }
 
     for glyph in &glyphs {
         if let Some(bounding_box) = glyph.pixel_bounding_box() {

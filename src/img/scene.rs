@@ -29,7 +29,9 @@ impl<'a> Scene<'a> {
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
 
         let white = Rgba::from_slice(&[255, 255, 255, 255]);
-        let black = Rgba::from_slice(&[0, 0, 0, 255]);
+
+        let mut text_box: ImageBuffer<Rgba<u8>, Vec<u8>> =
+            ImageBuffer::new(self.screen.xmax, self.text.ymax - self.text.ymin);
 
         if let Some(bg_path) = bg_path {
             let bg_img = load_sprite(bg_path).expect("Unable to load sprite");
@@ -48,10 +50,20 @@ impl<'a> Scene<'a> {
             }
         }
 
+        for pixel in text_box.pixels_mut() {
+            pixel.0 = [0, 0, 0, 255 / 2];
+        }
+
+        overlay(
+            &mut image,
+            &mut text_box,
+            0,
+            self.text.ymin - (v_metrics.ascent) as u32,
+        );
+
         draw_text(
             character_name,
             white,
-            black,
             &mut image,
             &self.font,
             self.scale,
@@ -64,7 +76,6 @@ impl<'a> Scene<'a> {
         draw_words(
             dialogue,
             white,
-            black,
             &mut image,
             &self.font,
             self.scale,
@@ -84,9 +95,16 @@ impl<'a> Scene<'a> {
         choices: &(&str, &str),
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
+        let glyph_height = v_metrics.ascent - v_metrics.descent;
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
-        let black = Rgba::from_slice(&[0, 0, 0, 255]);
         let white = Rgba::from_slice(&[255, 255, 255, 255]);
+
+        let mut opacity_box: ImageBuffer<Rgba<u8>, Vec<u8>> =
+            ImageBuffer::new(self.screen.xmax, (glyph_height * 1.5) as u32);
+
+        for pixel in opacity_box.pixels_mut() {
+            pixel.0 = [0, 0, 0, 255 / 2];
+        }
 
         if let Some(bg_path) = bg_path {
             let bg_img = load_sprite(bg_path).expect("Unable to load sprite");
@@ -111,10 +129,16 @@ impl<'a> Scene<'a> {
         );
         let b_width = glyphs_width(b_glyphs);
 
+        overlay(
+            &mut image,
+            &opacity_box,
+            0,
+            (self.screen.ymax as f32 / 4.0 - glyph_height) as u32,
+        );
+
         draw_text(
             choices.0,
             &white,
-            &black,
             &mut image,
             &self.font,
             self.scale,
@@ -123,6 +147,8 @@ impl<'a> Scene<'a> {
                 self.screen.ymax as f32 / 4.0,
             ),
         );
+
+        /*
 
         let min_x = a_glyphs
             .first()
@@ -135,11 +161,18 @@ impl<'a> Scene<'a> {
         for x in min_x - a_width / 2..self.screen.xmax - (min_x - a_width / 2) {
             image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *white);
         }
+        */
+
+        overlay(
+            &mut image,
+            &opacity_box,
+            0,
+            (self.screen.ymax as f32 / 4.0 + v_metrics.ascent * 5.0 - glyph_height) as u32,
+        );
 
         draw_text(
             choices.1,
             &white,
-            &black,
             &mut image,
             &self.font,
             self.scale,
@@ -148,18 +181,6 @@ impl<'a> Scene<'a> {
                 self.screen.ymax as f32 / 4.0 + v_metrics.ascent * 5.0,
             ),
         );
-
-        let min_x = b_glyphs
-            .first()
-            .map(|g| g.pixel_bounding_box().unwrap().min.x)
-            .unwrap() as u32;
-        let max_y = b_glyphs
-            .first()
-            .map(|g| g.pixel_bounding_box().unwrap().max.y)
-            .unwrap() as u32;
-        for x in min_x - b_width / 2..self.screen.xmax - (min_x - b_width / 2) {
-            image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *white);
-        }
 
         image
     }
