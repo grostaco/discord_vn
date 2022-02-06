@@ -9,7 +9,7 @@ A visual novel scripting language which renders as interactable components on di
         - [MacOS](#linux-and-macos)
 - [Scripting](#scripting)
     - [Dialogue](#dialogue)
-    - [Directives](#directives)
+    - [Directives](#meta-directives)
     - [Examples](#examples)
 # Usage
 
