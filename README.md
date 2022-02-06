@@ -39,7 +39,7 @@ cargo run --bin discord
 ```
 
 # Scripting
-For testing scripts, it is recommended to use the engine environment available for download here [here](https://github.com/grostaco/discord_vn/releases/latest/download/discord.zip).
+For testing scripts, it is recommended to use the engine environment available for download [here](https://github.com/grostaco/discord_vn/releases/latest/download/engine.zip).
 ## Dialogue
 
 To create a dialogue, the format goes as follow
