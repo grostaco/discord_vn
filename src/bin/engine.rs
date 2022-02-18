@@ -40,6 +40,7 @@ fn main() {
         },
     };
     let config = Config::from_file("resources/config.conf").unwrap();
+    let mut rendered = 0;
     let script_path = config
         .fields
         .get("Path")
@@ -108,15 +109,8 @@ fn main() {
                         }
                     },
                 };
-                engine.render_to(&format!(
-                    "resources/render/{}_{}.png",
-                    engine
-                        .script
-                        .name
-                        .get(engine.script.name.rfind("/").unwrap_or(0)..)
-                        .unwrap(),
-                    engine.iscript
-                ));
+                engine.render_to(&format!("resources/render/render_{}.png", rendered));
+                rendered += 1;
                 engine.next(choice);
             }
         }
