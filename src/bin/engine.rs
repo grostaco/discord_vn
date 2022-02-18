@@ -94,7 +94,7 @@ fn main() {
                                     buf.clear();
                                 }
                             }
-                            None => println!("[*] Jumping to {}", jump.endpoint.name),
+                            None => println!("[*] Jumping to {}", jump.endpoint.script_path),
                         },
                         ScriptDirective::Sprite(sprite) => {
                             if let Some(sprite_path) = &sprite.sprite_path {

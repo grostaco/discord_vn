@@ -30,13 +30,13 @@ impl<'a> Engine<'a> {
     }
 
     pub fn next(&mut self, choice: bool) -> Option<&ScriptContext> {
-        if let Some(ctx) = self.script.ctx.get(self.iscript) {
+        if let Some(ctx) = self.script.ctx.get_mut(self.iscript) {
             if let ScriptContext::Directive(directive) = ctx {
                 match directive {
                     ScriptDirective::Jump(jump) => match &jump.choices {
                         Some(_) => {
                             if choice {
-                                self.script = jump.endpoint.clone();
+                                self.script = jump.endpoint.load();
                                 self.iscript = 0;
                             } else {
                                 self.iscript += 1
@@ -44,7 +44,7 @@ impl<'a> Engine<'a> {
                         }
                         None => {
                             self.iscript = 0;
-                            self.script = jump.endpoint.clone()
+                            self.script = jump.endpoint.load()
                         }
                     },
                     ScriptDirective::Sprite(sprite) => {

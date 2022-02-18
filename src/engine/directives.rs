@@ -7,7 +7,13 @@ pub trait Directive: Sized {
 #[derive(Clone, Debug)]
 pub struct JumpDirective {
     pub choices: Option<(String, String)>,
-    pub endpoint: Script,
+    pub endpoint: LazilyLoadedScript,
+}
+
+#[derive(Clone, Debug)]
+pub struct LazilyLoadedScript {
+    pub script_path: String,
+    pub script: Option<Script>,
 }
 
 #[derive(Clone, Debug)]
@@ -48,7 +54,7 @@ impl Directive for JumpDirective {
         };
         Ok(Self {
             choices,
-            endpoint: Script::from_file(&endpoint.split_whitespace().collect::<String>())?,
+            endpoint: LazilyLoadedScript::new(&endpoint.split_whitespace().collect::<String>()),
         })
     }
 }
@@ -129,5 +135,20 @@ impl Directive for CustomDirective {
             name: directive,
             args,
         })
+    }
+}
+
+impl LazilyLoadedScript {
+    pub fn new(script_path: &str) -> Self {
+        Self {
+            script_path: script_path.to_string(),
+            script: None,
+        }
+    }
+
+    pub fn load(&mut self) -> Script {
+        self.script
+            .get_or_insert(Script::from_file(&self.script_path).unwrap())
+            .clone()
     }
 }
