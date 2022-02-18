@@ -1,21 +1,23 @@
 use std::collections::HashMap;
 
+use image::DynamicImage;
+
 use super::{
     script::{ScriptContext, ScriptDirective},
     ParseError, Script, SpriteDirective,
 };
 use crate::Scene;
 
-pub struct Engine<'a> {
+pub struct Engine<'s> {
     pub script: Script,
     pub iscript: usize,
-    scene: &'a Scene<'a>,
+    scene: &'s Scene<'s>,
     sprites: HashMap<String, SpriteDirective>,
-    bg: Option<String>,
+    bg: Option<DynamicImage>,
 }
 
-impl<'a> Engine<'a> {
-    pub fn from_file(script_path: &str, scene: &'a Scene<'a>) -> Result<Self, ParseError> {
+impl<'s> Engine<'s> {
+    pub fn from_file(script_path: &str, scene: &'s Scene) -> Result<Self, ParseError> {
         Ok(Self {
             script: Script::from_file(script_path)?,
             iscript: 0,
@@ -56,7 +58,7 @@ impl<'a> Engine<'a> {
                         self.iscript += 1;
                     }
                     ScriptDirective::LoadBG(bg) => {
-                        self.bg = Some(bg.bg_path.to_owned());
+                        self.bg = Some(bg.bg.clone());
                         self.iscript += 1;
                     }
                     ScriptDirective::Custom(_) => {
@@ -109,7 +111,7 @@ impl<'a> Engine<'a> {
             if let Some(image) = match current {
                 ScriptContext::Dialogue(dialogue) => Some(
                     self.scene.draw_dialogue(
-                        self.bg.as_ref().map(|bg| bg.as_str()),
+                        self.bg.as_ref(),
                         self.sprites.values().collect::<Vec<_>>(),
                         &dialogue.character_name,
                         &dialogue
@@ -120,10 +122,10 @@ impl<'a> Engine<'a> {
                 ),
                 ScriptContext::Directive(directive) => match directive {
                     ScriptDirective::Jump(jump) => match &jump.choices {
-                        Some((a, b)) => Some(self.scene.draw_choice(
-                            self.bg.as_ref().map(|bg| bg.as_str()),
-                            &(a.as_str(), b.as_str()),
-                        )),
+                        Some((a, b)) => Some(
+                            self.scene
+                                .draw_choice(self.bg.as_ref(), &(a.as_str(), b.as_str())),
+                        ),
                         None => None,
                     },
                     _ => None,

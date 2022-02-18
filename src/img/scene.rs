@@ -4,7 +4,7 @@ use rusttype::{point, Font, Scale};
 use crate::engine::SpriteDirective;
 
 use super::{
-    draw::{as_glyphs, draw_words, glyphs_width, load_sprite},
+    draw::{as_glyphs, draw_words, glyphs_width, load_image},
     draw_text,
     size::Size,
 };
@@ -20,7 +20,7 @@ pub struct Scene<'a> {
 impl<'a> Scene<'a> {
     pub fn draw_dialogue(
         &self,
-        bg_path: Option<&str>,
+        bg: Option<&DynamicImage>,
         sprites: Vec<&SpriteDirective>,
         character_name: &str,
         dialogue: &str,
@@ -33,14 +33,13 @@ impl<'a> Scene<'a> {
         let mut text_box: ImageBuffer<Rgba<u8>, Vec<u8>> =
             ImageBuffer::new(self.screen.xmax, self.text.ymax - self.text.ymin);
 
-        if let Some(bg_path) = bg_path {
-            let bg_img = load_sprite(bg_path).expect("Unable to load sprite");
-            overlay(&mut image, &bg_img, 0, 0);
+        if let Some(bg) = bg {
+            overlay(&mut image, bg, 0, 0);
         }
 
         for sprite in sprites {
             if let Some(sprite_path) = &sprite.sprite_path {
-                let sprite_img = load_sprite(sprite_path).expect("Unable to load sprite");
+                let sprite_img = load_image(sprite_path).expect("Unable to load sprite");
                 overlay(
                     &mut image,
                     &sprite_img,
@@ -91,7 +90,7 @@ impl<'a> Scene<'a> {
 
     pub fn draw_choice(
         &self,
-        bg_path: Option<&str>,
+        bg: Option<&DynamicImage>,
         choices: &(&str, &str),
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
@@ -106,9 +105,8 @@ impl<'a> Scene<'a> {
             pixel.0 = [0, 0, 0, 255 / 2];
         }
 
-        if let Some(bg_path) = bg_path {
-            let bg_img = load_sprite(bg_path).expect("Unable to load sprite");
-            overlay(&mut image, &bg_img, 0, 0);
+        if let Some(bg) = bg {
+            overlay(&mut image, bg, 0, 0);
         }
 
         let a_glyphs = &as_glyphs(

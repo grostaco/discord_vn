@@ -124,7 +124,7 @@ pub fn as_glyphs<'a>(
     font.layout(text, scale, point).collect::<Vec<_>>()
 }
 
-pub fn load_sprite(path: &str) -> Result<DynamicImage, ImageError> {
+pub fn load_image(path: &str) -> Result<DynamicImage, ImageError> {
     Reader::open(path).map_or_else(
         |_e| panic!("Cannot open background file {}", path),
         |r| r.decode(),

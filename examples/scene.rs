@@ -1,4 +1,4 @@
-use image_rpg::{Scene, Size, SpriteDirective};
+use image_rpg::{img::load_image, Scene, Size, SpriteDirective};
 use rusttype::{Font, Scale};
 
 fn main() {
@@ -28,8 +28,11 @@ fn main() {
         },
     };
 
-    let image = s.draw_dialogue( Some("resources/bgs/bg1.png"), vec![&SpriteDirective { name: "x".to_owned(), sprite_path: Some("resources/sprites/Mon1.png".to_owned()), x: Some(0), y: Some(0), show: true }], "Frog", "AAAAAAAAAAAAAAAAAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA");
+    let image = s.draw_dialogue( Some(&load_image("resources/bgs/bg1.png").unwrap()), vec![&SpriteDirective { name: "x".to_owned(), sprite_path: Some("resources/sprites/Mon1.png".to_owned()), x: Some(0), y: Some(0), show: true }], "Frog", "AAAAAAAAAAAAAAAAAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA AAAAAAAAA");
     image.save("image_dialogue.png").unwrap();
-    let image = s.draw_choice(Some("resources/bgs/bg1.png"), &("Choice one", "Choice two"));
+    let image = s.draw_choice(
+        Some(&load_image("resources/bgs/bg1.png").unwrap()),
+        &("Choice one", "Choice two"),
+    );
     image.save("image_choice.png").unwrap();
 }

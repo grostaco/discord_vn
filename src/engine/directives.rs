@@ -1,3 +1,7 @@
+use image::DynamicImage;
+
+use crate::img::load_image;
+
 use super::{ParseError, Script};
 
 pub trait Directive: Sized {
@@ -28,6 +32,7 @@ pub struct SpriteDirective {
 #[derive(Clone, Debug)]
 pub struct LoadBGDirective {
     pub bg_path: String,
+    pub bg: DynamicImage,
 }
 
 #[derive(Clone, Debug)]
@@ -111,7 +116,8 @@ impl Directive for SpriteDirective {
 impl Directive for LoadBGDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
         Ok(Self {
-            bg_path: ctx.to_string(),
+            bg_path: ctx.to_owned(),
+            bg: load_image(ctx).unwrap(),
         })
     }
 }
