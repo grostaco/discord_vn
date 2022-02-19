@@ -6,6 +6,22 @@ use image_rpg::{
 };
 use rusttype::{Font, Scale};
 
+macro_rules! log {
+    (dbg,$x:expr) => {
+        println!("[*] {}", $x);
+    };
+    (info,$x:expr) => {
+        println!("[!] {}", $x);
+    };
+    (input,$x:expr) => {
+        println!("[?] {}", $x);
+    };
+    (err,$x:expr) => {{
+        println!("[!!] {}. Aborting.", $x);
+        exit(0);
+    }};
+}
+
 fn main() {
     println!("[*] Discord VN scripting engine\n[*] ver 1.0.0");
 
@@ -36,14 +52,14 @@ fn main() {
             ymax: 480,
         },
     };
-    let config = Config::from_file("resources/config.conf").unwrap();
+    let config = Config::from_file("resources/config.conf").unwrap_or_else(|e| log!(err, e));
     let mut rendered = 0;
     let script_path = config
         .fields
         .get("Path")
-        .unwrap()
+        .unwrap_or_else(|| log!(err, "Cannot find [Path] in config file"))
         .get("script_path")
-        .unwrap();
+        .unwrap_or_else(|| log!(err, "script_path not set in [Path]"));
     println!("[*] Engine initializing, searching for {}", script_path);
     match Engine::from_file(script_path.as_str(), &scene) {
         Ok(mut engine) => {
