@@ -124,7 +124,9 @@ fn main() {
                 };
                 engine.render_to(&format!("resources/render/render_{}.png", rendered));
                 rendered += 1;
-                engine.next(choice);
+                if let Err(e) = engine.next(choice) {
+                    log!(err, e);
+                }
             }
         }
         Err(e) => {

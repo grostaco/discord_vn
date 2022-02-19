@@ -142,7 +142,7 @@ impl<'s> Begin<'s> {
         };
         let mut play_info: Option<PlayInfo> = None;
 
-        while let Some(ctx) = self.engine.next_until(renderable) {
+        while let Some(ctx) = self.engine.next_until(renderable).unwrap() {
             if let ScriptContext::Directive(ScriptDirective::Custom(custom)) = ctx {
                 let guild_id = custom
                     .args
@@ -162,7 +162,7 @@ impl<'s> Begin<'s> {
                     channel_id,
                     custom.args.get(2).expect("URL not provided").to_string(),
                 ));
-                self.engine.next(false);
+                self.engine.next(false).unwrap();
             } else {
                 break;
             }
@@ -202,9 +202,9 @@ impl<'s> Begin<'s> {
                 "second_choice_select" => false,
                 id => panic!("Cannot handle interaction custom_id {}", id),
             };
-            self.engine.next(choice);
-            if let Some(_ctx) = self.engine.next_until_renderable() {
-                while let Some(ctx) = self.engine.next_until(renderable) {
+            self.engine.next(choice).unwrap();
+            if let Some(_ctx) = self.engine.next_until_renderable().unwrap() {
+                while let Some(ctx) = self.engine.next_until(renderable).unwrap() {
                     if let ScriptContext::Directive(ScriptDirective::Custom(custom)) = ctx {
                         let guild_id = custom
                             .args
@@ -224,7 +224,7 @@ impl<'s> Begin<'s> {
                             channel_id,
                             custom.args.get(2).expect("URL not provided").to_string(),
                         ));
-                        self.engine.next(false);
+                        self.engine.next(false).unwrap();
                     } else {
                         break;
                     }

@@ -6,14 +6,18 @@ use super::{
     script::{ScriptContext, ScriptDirective},
     ParseError, Script, SpriteDirective,
 };
-use crate::Scene;
+use crate::{
+    img::{error::LoadImageError, load_image},
+    Scene,
+};
 
 pub struct Engine<'s> {
     pub script: Script,
     pub iscript: usize,
     scene: &'s Scene<'s>,
     sprites: HashMap<String, SpriteDirective>,
-    bg: Option<DynamicImage>,
+    cached_bgs: HashMap<String, DynamicImage>,
+    bg_path: Option<String>,
 }
 
 impl<'s> Engine<'s> {
@@ -23,7 +27,8 @@ impl<'s> Engine<'s> {
             iscript: 0,
             scene,
             sprites: HashMap::new(),
-            bg: None,
+            cached_bgs: HashMap::new(),
+            bg_path: None,
         })
     }
 
@@ -31,7 +36,7 @@ impl<'s> Engine<'s> {
         self.script.ctx.get(self.iscript)
     }
 
-    pub fn next(&mut self, choice: bool) -> Option<&ScriptContext> {
+    pub fn next(&mut self, choice: bool) -> Result<Option<&ScriptContext>, LoadImageError> {
         if let Some(ctx) = self.script.ctx.get_mut(self.iscript) {
             if let ScriptContext::Directive(directive) = ctx {
                 match directive {
@@ -58,7 +63,11 @@ impl<'s> Engine<'s> {
                         self.iscript += 1;
                     }
                     ScriptDirective::LoadBG(bg) => {
-                        self.bg = Some(bg.bg.clone());
+                        self.bg_path = Some(bg.bg_path.to_string());
+                        if !self.cached_bgs.contains_key(&bg.bg_path) {
+                            self.cached_bgs
+                                .insert(bg.bg_path.to_string(), load_image(&bg.bg_path)?);
+                        }
                         self.iscript += 1;
                     }
                     ScriptDirective::Custom(_) => {
@@ -69,10 +78,10 @@ impl<'s> Engine<'s> {
                 self.iscript += 1;
             }
         }
-        self.script.ctx.get(self.iscript)
+        Ok(self.script.ctx.get(self.iscript))
     }
 
-    pub fn next_until<P>(&mut self, predicate: P) -> Option<&ScriptContext>
+    pub fn next_until<P>(&mut self, predicate: P) -> Result<Option<&ScriptContext>, LoadImageError>
     where
         P: Fn(&ScriptContext) -> bool,
     {
@@ -80,12 +89,12 @@ impl<'s> Engine<'s> {
             if predicate(context) {
                 break;
             }
-            self.next(false);
+            self.next(false)?;
         }
-        self.current()
+        Ok(self.current())
     }
 
-    pub fn next_until_renderable(&mut self) -> Option<&ScriptContext> {
+    pub fn next_until_renderable(&mut self) -> Result<Option<&ScriptContext>, LoadImageError> {
         while let Some(context) = self.current() {
             match context {
                 ScriptContext::Dialogue(_) => break,
@@ -97,9 +106,9 @@ impl<'s> Engine<'s> {
                     _ => {}
                 },
             };
-            self.next(false);
+            self.next(false)?;
         }
-        self.current()
+        Ok(self.current())
     }
 
     pub fn render(&self) {
@@ -111,7 +120,9 @@ impl<'s> Engine<'s> {
             if let Some(image) = match current {
                 ScriptContext::Dialogue(dialogue) => Some(
                     self.scene.draw_dialogue(
-                        self.bg.as_ref(),
+                        self.bg_path
+                            .as_ref()
+                            .map_or(None, |bg_path| self.cached_bgs.get(bg_path)),
                         self.sprites.values().collect::<Vec<_>>(),
                         &dialogue.character_name,
                         &dialogue
@@ -123,8 +134,12 @@ impl<'s> Engine<'s> {
                 ScriptContext::Directive(directive) => match directive {
                     ScriptDirective::Jump(jump) => match &jump.choices {
                         Some((a, b)) => Some(
-                            self.scene
-                                .draw_choice(self.bg.as_ref(), &(a.as_str(), b.as_str())),
+                            self.scene.draw_choice(
+                                self.bg_path
+                                    .as_ref()
+                                    .map_or(None, |bg_path| self.cached_bgs.get(bg_path)),
+                                &(a.as_str(), b.as_str()),
+                            ),
                         ),
                         None => None,
                     },

@@ -41,6 +41,6 @@ fn main() {
                 .unwrap(),
             engine.iscript
         ));
-        engine.next(true);
+        engine.next(true).unwrap();
     }
 }
