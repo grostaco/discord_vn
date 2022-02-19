@@ -97,9 +97,12 @@ impl Script {
                         i,
                         line.len()
                     )?),
-                    "loadbg" => {
-                        ScriptDirective::LoadBG(LoadBGDirective::from_context(context).unwrap())
-                    }
+                    "loadbg" => ScriptDirective::LoadBG(to_syntax_error!(
+                        LoadBGDirective::from_context(context),
+                        path.to_string(),
+                        i,
+                        line.len()
+                    )?),
                     "custom" => ScriptDirective::Custom(to_syntax_error!(
                         CustomDirective::from_context(context),
                         path.to_string(),

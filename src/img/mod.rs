@@ -1,4 +1,5 @@
 mod draw;
+pub mod error;
 mod scene;
 mod size;
 

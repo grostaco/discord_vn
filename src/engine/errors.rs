@@ -21,8 +21,10 @@ pub enum ParseError {
     UnknownDirective(String),
     #[error("Directive {0} cannot handle argument {1}")]
     DirectiveError(&'static str, String),
-    #[error("Cannot open file {0}")]
+    #[error("Cannot open file \"{0}\"")]
     NoFileExists(String),
-    #[error("Error on file {0} line {1} character {2}: {3}")]
+    #[error("Error on file \"{0}\" line {1} character {2}: {3}")]
     SyntaxError(String, usize, usize, String),
+    #[error("Image error on image \"{0}\" because {1}")]
+    ImageError(String, String),
 }

@@ -1,6 +1,6 @@
 use image::DynamicImage;
 
-use crate::img::load_image;
+use crate::img::{error::LoadImageError, load_image};
 
 use super::{ParseError, Script};
 
@@ -117,7 +117,12 @@ impl Directive for LoadBGDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
         Ok(Self {
             bg_path: ctx.to_owned(),
-            bg: load_image(ctx).unwrap(),
+            bg: load_image(ctx).map_err(|e| match e {
+                LoadImageError::ImageError(img) => {
+                    ParseError::ImageError(ctx.to_string(), img.to_string().to_ascii_lowercase())
+                }
+                LoadImageError::IoError(_) => ParseError::NoFileExists(ctx.to_string()),
+            })?,
         })
     }
 }

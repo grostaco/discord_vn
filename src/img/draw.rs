@@ -1,5 +1,7 @@
-use image::{io::Reader, DynamicImage, ImageBuffer, ImageError, Pixel, Rgba};
+use image::{io::Reader, DynamicImage, ImageBuffer, Pixel, Rgba};
 use rusttype::{Font, Point, PositionedGlyph, Scale};
+
+use super::error::LoadImageError;
 
 const WHITESPACE_PAD: u32 = 16;
 
@@ -124,9 +126,9 @@ pub fn as_glyphs<'a>(
     font.layout(text, scale, point).collect::<Vec<_>>()
 }
 
-pub fn load_image(path: &str) -> Result<DynamicImage, ImageError> {
-    Reader::open(path).map_or_else(
-        |_e| panic!("Cannot open background file {}", path),
-        |r| r.decode(),
-    )
+pub fn load_image(path: &str) -> Result<DynamicImage, LoadImageError> {
+    Reader::open(path)
+        .map_err(|e| LoadImageError::IoError(e))?
+        .decode()
+        .map_err(|e| LoadImageError::ImageError(e))
 }
