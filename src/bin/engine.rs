@@ -1,7 +1,4 @@
-use std::{
-    io::{self},
-    process::exit,
-};
+use std::{io, process::exit};
 
 use image_rpg::{
     engine::{ScriptContext, ScriptDirective},
