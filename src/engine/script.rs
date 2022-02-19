@@ -61,67 +61,59 @@ impl Script {
                     line.len(),
                     "Expected closing ]".into(),
                 ))?;
-                if line.starts_with("[!meta") {
-                    let directive_iend = line.find('(').ok_or(ParseError::SyntaxError(
+
+                ctx.push(ScriptContext::Dialogue(ScriptDialogue {
+                    character_name: line.get(1..iend).map(str::to_string).unwrap(),
+                    dialogues: Vec::new(),
+                }))
+            } else if line.starts_with("#") {
+                continue;
+            } else if line.starts_with("@") {
+                let directive_iend = line.find('(').ok_or(ParseError::SyntaxError(
+                    path.to_string(),
+                    i,
+                    line.len(),
+                    "Expected (".into(),
+                ))?;
+                let directive = line.get(1..directive_iend).unwrap();
+                let ctx_iend = line.rfind(')').ok_or(ParseError::SyntaxError(
+                    path.to_string(),
+                    i,
+                    line.len(),
+                    "Expected closing parentheses".into(),
+                ))?;
+                let context = line.get(directive_iend + 1..ctx_iend).unwrap();
+
+                ctx.push(ScriptContext::Directive(match directive {
+                    "jump" => ScriptDirective::Jump(to_syntax_error!(
+                        JumpDirective::from_context(context),
+                        path.to_string(),
+                        i,
+                        line.len()
+                    )?),
+                    "sprite" => ScriptDirective::Sprite(to_syntax_error!(
+                        SpriteDirective::from_context(context),
+                        path.to_string(),
+                        i,
+                        line.len()
+                    )?),
+                    "loadbg" => {
+                        ScriptDirective::LoadBG(LoadBGDirective::from_context(context).unwrap())
+                    }
+                    "custom" => ScriptDirective::Custom(to_syntax_error!(
+                        CustomDirective::from_context(context),
+                        path.to_string(),
+                        i,
+                        line.len()
+                    )?),
+
+                    directive => Err(ParseError::SyntaxError(
                         path.to_string(),
                         i,
                         line.len(),
-                        "Expected (".into(),
-                    ))?;
-                    let directive_ibegin = line.get(..directive_iend).unwrap().rfind(' ').ok_or(
-                        ParseError::SyntaxError(
-                            path.to_string(),
-                            i,
-                            line.len(),
-                            "!meta and the directive word must be separated by a space".into(),
-                        ),
-                    )? + 1;
-                    let ctx_iend = line.rfind(')').ok_or(ParseError::SyntaxError(
-                        path.to_string(),
-                        i,
-                        line.len(),
-                        "Expected closing parentheses".into(),
-                    ))?;
-                    let context = line.get(directive_iend + 1..ctx_iend).unwrap();
-
-                    ctx.push(ScriptContext::Directive(
-                        match line.get(directive_ibegin..directive_iend).unwrap() {
-                            "jump" => ScriptDirective::Jump(to_syntax_error!(
-                                JumpDirective::from_context(context),
-                                path.to_string(),
-                                i,
-                                line.len()
-                            )?),
-                            "sprite" => ScriptDirective::Sprite(to_syntax_error!(
-                                SpriteDirective::from_context(context),
-                                path.to_string(),
-                                i,
-                                line.len()
-                            )?),
-                            "loadbg" => ScriptDirective::LoadBG(
-                                LoadBGDirective::from_context(context).unwrap(),
-                            ),
-                            "custom" => ScriptDirective::Custom(to_syntax_error!(
-                                CustomDirective::from_context(context),
-                                path.to_string(),
-                                i,
-                                line.len()
-                            )?),
-
-                            directive => Err(ParseError::SyntaxError(
-                                path.to_string(),
-                                i,
-                                line.len(),
-                                format!("Unknown directive {}", directive),
-                            ))?,
-                        },
-                    ));
-                } else {
-                    ctx.push(ScriptContext::Dialogue(ScriptDialogue {
-                        character_name: line.get(1..iend).map(str::to_string).unwrap(),
-                        dialogues: Vec::new(),
-                    }))
-                }
+                        format!("Unknown directive {}", directive),
+                    ))?,
+                }));
             } else if line.trim().len() != 0 {
                 // the rest here must be dialogues
                 match ctx.last_mut().ok_or(ParseError::SyntaxError(
