@@ -11,14 +11,11 @@ rusttype = "0.9.2"
 thiserror = "1.0"
 
 [dependencies.serenity]
-git = "https://github.com/serenity-rs/serenity"
-branch = "next"
+version = "0.10.10"
 default-features = false
 features = ["builder", "cache", "client", "gateway", "model", "utils", "rustls_backend", "unstable_discord_api", "collector"]
-
 [dependencies.songbird]
-git = "https://github.com/serenity-rs/songbird"
-branch = "next"
+version = "0.2.2"
 features = ["driver", "serenity-rustls", "youtube-dlc"]
 [dependencies.tokio]
 version = "1"

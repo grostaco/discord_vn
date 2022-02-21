@@ -1,3 +1,4 @@
 .vscode
 /target
 resources/*
+!resources/fonts/
