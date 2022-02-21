@@ -19,27 +19,29 @@ impl Config {
                 }
                 _ => panic!("Cannot open file {} because {}", path, e),
             })?
-            .split("\n")
+            .split('\n')
             .enumerate()
             .map(|(i, line)| (i + 1, line))
         {
-            if line.trim().len() == 0 {
+            if line.trim().is_empty() {
                 continue;
             }
 
-            if line.chars().nth(0).unwrap() == '[' {
+            if line.starts_with('[') {
                 last_key = line.get(
-                    1..line.rfind("]").ok_or(ParseError::SyntaxError(
-                        path.to_string(),
-                        i,
-                        line.len(),
-                        "Expected closing ]".into(),
-                    ))?,
+                    1..line.rfind(']').ok_or_else(|| {
+                        ParseError::SyntaxError(
+                            path.to_string(),
+                            i,
+                            line.len(),
+                            "Expected closing ]".into(),
+                        )
+                    })?,
                 );
 
                 fields.insert(last_key.unwrap().to_owned(), HashMap::new());
             } else {
-                let kv = line.split("=").take(2).collect::<Vec<&str>>();
+                let kv = line.split('=').take(2).collect::<Vec<&str>>();
                 if let [key, value] = &kv[..] {
                     fields
                         .get_mut(last_key.unwrap())

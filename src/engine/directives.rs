@@ -1,3 +1,5 @@
+use image::DynamicImage;
+
 use super::{ParseError, Script};
 
 pub trait Directive: Sized {
@@ -20,6 +22,7 @@ pub struct LazilyLoadedScript {
 pub struct SpriteDirective {
     pub name: String,
     pub sprite_path: Option<String>,
+    pub sprite: Option<DynamicImage>,
     pub x: Option<u32>,
     pub y: Option<u32>,
     pub show: bool,
@@ -41,7 +44,7 @@ impl Directive for JumpDirective {
     /// "A", "B", endpoint.script to jump to endpoint.script if A is taken or
     /// endpoint.script
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
-        let ctx = ctx.split(",").take(3).collect::<Vec<_>>();
+        let ctx = ctx.split(',').take(3).collect::<Vec<_>>();
         let (choices, endpoint) = match &ctx[..] {
             [a, b, endpoint] => (Some((a.to_string(), b.to_string())), endpoint),
             [endpoint] => (None, endpoint),
@@ -65,10 +68,11 @@ impl Directive for SpriteDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
         let ctx = ctx.split_whitespace().collect::<String>();
 
-        Ok(match &ctx.split(",").collect::<Vec<&str>>()[..] {
+        Ok(match &ctx.split(',').collect::<Vec<&str>>()[..] {
             [name, display, x, y, visibility] => Self {
                 name: name.to_string(),
                 sprite_path: Some(display.to_string()),
+                sprite: None,
                 x: Some(x.parse().expect("x must be an integer")),
                 y: Some(y.parse().expect("y must be an integer")),
                 show: match *visibility {
@@ -87,6 +91,7 @@ impl Directive for SpriteDirective {
                 sprite_path: None,
                 x: None,
                 y: None,
+                sprite: None,
                 show: match *visibility {
                     "hide" => false,
                     _ => {
@@ -126,15 +131,14 @@ impl Directive for LoadBGDirective {
 
 impl Directive for CustomDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
-        let directive_iend = ctx.find('(').ok_or(ParseError::DirectiveError(
-            "custom",
-            "expected opening (".into(),
-        ))?;
+        let directive_iend = ctx
+            .find('(')
+            .ok_or_else(|| ParseError::DirectiveError("custom", "expected opening (".into()))?;
         let directive = ctx.get(..directive_iend).unwrap().to_string();
         let args = ctx
             .get(directive_iend + 1..ctx.len() - 1)
             .unwrap()
-            .split(",")
+            .split(',')
             .map(str::trim)
             .map(str::to_string)
             .collect();

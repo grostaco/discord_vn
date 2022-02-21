@@ -55,7 +55,7 @@ impl<'a> Scene<'a> {
 
         overlay(
             &mut image,
-            &mut text_box,
+            &text_box,
             0,
             self.text.ymin - (v_metrics.ascent) as u32,
         );
@@ -136,7 +136,7 @@ impl<'a> Scene<'a> {
 
         draw_text(
             choices.0,
-            &white,
+            white,
             &mut image,
             &self.font,
             self.scale,
@@ -170,7 +170,7 @@ impl<'a> Scene<'a> {
 
         draw_text(
             choices.1,
-            &white,
+            white,
             &mut image,
             &self.font,
             self.scale,

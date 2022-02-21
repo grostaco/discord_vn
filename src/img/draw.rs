@@ -18,13 +18,13 @@ pub fn draw_words<'a, 'i>(
     let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
 
     let glyphs_vec: Vec<_> = text
-        .split(" ")
+        .split(' ')
         .map(|word| font.layout(word, scale, point).collect::<Vec<_>>())
         .collect();
 
     let (mut xcur, mut ycur) = (0, 0);
     for glyphs in glyphs_vec {
-        if glyphs.len() != 0 {
+        if !glyphs.is_empty() {
             let width = glyphs_width(&glyphs);
 
             if xcur + width + WHITESPACE_PAD > xmax {
@@ -71,7 +71,7 @@ pub fn draw_text<'a, 'i>(
 
 fn draw_layout<'a>(
     image: &'a mut ImageBuffer<Rgba<u8>, Vec<u8>>,
-    layout: &Vec<PositionedGlyph>,
+    layout: &[PositionedGlyph],
     color: &Rgba<u8>,
     xoffset: f32,
     yoffset: f32,
@@ -99,7 +99,7 @@ fn draw_layout<'a>(
 }
 
 #[inline]
-fn layout_width(layout: &Vec<PositionedGlyph>) -> (i32, i32) {
+fn layout_width(layout: &[PositionedGlyph]) -> (i32, i32) {
     let min_x = layout
         .first()
         .map(|g| g.pixel_bounding_box().unwrap().min.x)
@@ -112,7 +112,7 @@ fn layout_width(layout: &Vec<PositionedGlyph>) -> (i32, i32) {
 }
 
 #[inline]
-pub fn glyphs_width(glyphs: &Vec<PositionedGlyph>) -> u32 {
+pub fn glyphs_width(glyphs: &[PositionedGlyph]) -> u32 {
     let (min_x, max_x) = layout_width(glyphs);
     (max_x - min_x) as u32
 }
@@ -128,7 +128,7 @@ pub fn as_glyphs<'a>(
 
 pub fn load_image(path: &str) -> Result<DynamicImage, LoadImageError> {
     Reader::open(path)
-        .map_err(|e| LoadImageError::IoError(e))?
+        .map_err(LoadImageError::IoError)?
         .decode()
-        .map_err(|e| LoadImageError::ImageError(e))
+        .map_err(LoadImageError::ImageError)
 }

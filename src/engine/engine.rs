@@ -98,13 +98,13 @@ impl<'s> Engine<'s> {
         while let Some(context) = self.current() {
             match context {
                 ScriptContext::Dialogue(_) => break,
-                ScriptContext::Directive(directive) => match directive {
-                    ScriptDirective::Jump(jump) => match &jump.choices {
-                        Some(_) => break,
-                        _ => {}
-                    },
-                    _ => {}
-                },
+                ScriptContext::Directive(directive) => {
+                    if let ScriptDirective::Jump(jump) = directive {
+                        if jump.choices.is_some() {
+                            break;
+                        }
+                    }
+                }
             };
             self.next(false)?;
         }
@@ -122,27 +122,30 @@ impl<'s> Engine<'s> {
                     self.scene.draw_dialogue(
                         self.bg_path
                             .as_ref()
-                            .map_or(None, |bg_path| self.cached_bgs.get(bg_path)),
+                            .and_then(|bg_path| self.cached_bgs.get(bg_path)),
                         self.sprites.values().collect::<Vec<_>>(),
                         &dialogue.character_name,
                         &dialogue
                             .dialogues
                             .iter()
-                            .fold(String::new(), |a, b| a + " " + &b),
+                            .fold(String::new(), |a, b| a + " " + b),
                     ),
                 ),
                 ScriptContext::Directive(directive) => match directive {
-                    ScriptDirective::Jump(jump) => match &jump.choices {
-                        Some((a, b)) => Some(
-                            self.scene.draw_choice(
-                                self.bg_path
-                                    .as_ref()
-                                    .map_or(None, |bg_path| self.cached_bgs.get(bg_path)),
-                                &(a.as_str(), b.as_str()),
-                            ),
-                        ),
-                        None => None,
-                    },
+                    ScriptDirective::Jump(jump) => {
+                        if let Some((a, b)) = &jump.choices {
+                            Some(
+                                self.scene.draw_choice(
+                                    self.bg_path
+                                        .as_ref()
+                                        .and_then(|bg_path| self.cached_bgs.get(bg_path)),
+                                    &(a.as_str(), b.as_str()),
+                                ),
+                            )
+                        } else {
+                            None
+                        }
+                    }
                     _ => None,
                 },
             } {

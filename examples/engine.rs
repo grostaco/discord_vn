@@ -31,13 +31,13 @@ fn main() {
     let mut engine =
         Engine::from_file("resources/script.txt", &s).expect("Cannot construct engine");
 
-    while let Some(_) = engine.current() {
+    while engine.current().is_some() {
         engine.render_to(&format!(
             "resources/render/{}_{}.png",
             engine
                 .script
                 .name
-                .get(engine.script.name.rfind("/").unwrap()..)
+                .get(engine.script.name.rfind('/').unwrap()..)
                 .unwrap(),
             engine.iscript
         ));

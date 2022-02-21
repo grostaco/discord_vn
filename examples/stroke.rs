@@ -1,7 +1,7 @@
 use image::{DynamicImage, ImageBuffer, Pixel, Rgba};
 use rusttype::{Font, Point, PositionedGlyph, Scale};
 
-pub fn layout_width(layout: &Vec<PositionedGlyph>) -> (i32, i32) {
+pub fn layout_width(layout: &[PositionedGlyph]) -> (i32, i32) {
     let min_x = layout
         .first()
         .map(|g| g.pixel_bounding_box().unwrap().min.x)
@@ -15,7 +15,7 @@ pub fn layout_width(layout: &Vec<PositionedGlyph>) -> (i32, i32) {
 
 fn draw_layout<'a>(
     image: &'a mut ImageBuffer<Rgba<u8>, Vec<u8>>,
-    layout: &Vec<PositionedGlyph>,
+    layout: &[PositionedGlyph],
     color: &Rgba<u8>,
     xoffset: f32,
     yoffset: f32,
@@ -55,9 +55,9 @@ fn main() {
         .layout(text, scale, Point { x: 320.0, y: 240.0 })
         .collect::<Vec<_>>();
 
-    for xc in vec![-0.75, 0.75] {
-        for yc in vec![-0.75, 0.75] {
-            draw_layout(&mut image, &layout, shadow_color, xc, yc);
+    for xc in &[-0.75, 0.75] {
+        for yc in &[-0.75, 0.75] {
+            draw_layout(&mut image, &layout, shadow_color, *xc, *yc);
         }
     }
 

@@ -1,5 +1,6 @@
 pub mod config;
 pub mod directives;
+#[allow(clippy::module_inception)]
 pub mod engine;
 pub mod errors;
 pub mod script;

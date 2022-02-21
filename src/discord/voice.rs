@@ -24,7 +24,7 @@ pub async fn play_url(
 
         let source = match Restartable::ytdl(url.trim().to_owned(), true).await {
             Ok(source) => source,
-            Err(why) => Err(PlayError::InputError(why))?,
+            Err(why) => return Err(PlayError::InputError(why)),
         };
 
         let handle = handler.play_only_source(source.into());

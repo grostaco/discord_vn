@@ -50,38 +50,39 @@ impl Script {
                 }
                 _ => panic!("Cannot open file {} because {}", path, e),
             })?
-            .split("\n")
+            .split('\n')
             .enumerate()
             .map(|(i, line)| (i + 1, line))
         {
-            if line.starts_with("[") {
-                let iend = line.rfind("]").ok_or(ParseError::SyntaxError(
-                    path.to_string(),
-                    i,
-                    line.len(),
-                    "Expected closing ]".into(),
-                ))?;
+            if line.starts_with('[') {
+                let iend = line.rfind(']').ok_or_else(|| {
+                    ParseError::SyntaxError(
+                        path.to_string(),
+                        i,
+                        line.len(),
+                        "Expected closing ]".into(),
+                    )
+                })?;
 
                 ctx.push(ScriptContext::Dialogue(ScriptDialogue {
                     character_name: line.get(1..iend).map(str::to_string).unwrap(),
                     dialogues: Vec::new(),
                 }))
-            } else if line.starts_with("#") {
+            } else if line.starts_with('#') {
                 continue;
-            } else if line.starts_with("@") {
-                let directive_iend = line.find('(').ok_or(ParseError::SyntaxError(
-                    path.to_string(),
-                    i,
-                    line.len(),
-                    "Expected (".into(),
-                ))?;
+            } else if line.starts_with('@') {
+                let directive_iend = line.find('(').ok_or_else(|| {
+                    ParseError::SyntaxError(path.to_string(), i, line.len(), "Expected (".into())
+                })?;
                 let directive = line.get(1..directive_iend).unwrap();
-                let ctx_iend = line.rfind(')').ok_or(ParseError::SyntaxError(
-                    path.to_string(),
-                    i,
-                    line.len(),
-                    "Expected closing parentheses".into(),
-                ))?;
+                let ctx_iend = line.rfind(')').ok_or_else(|| {
+                    ParseError::SyntaxError(
+                        path.to_string(),
+                        i,
+                        line.len(),
+                        "Expected closing parentheses".into(),
+                    )
+                })?;
                 let context = line.get(directive_iend + 1..ctx_iend).unwrap();
 
                 ctx.push(ScriptContext::Directive(match directive {
@@ -110,32 +111,38 @@ impl Script {
                         line.len()
                     )?),
 
-                    directive => Err(ParseError::SyntaxError(
+                    directive => {
+                        return Err(ParseError::SyntaxError(
+                            path.to_string(),
+                            i,
+                            line.len(),
+                            format!("Unknown directive {}", directive),
+                        ))
+                    }
+                }));
+            } else if !line.trim().is_empty() {
+                // the rest here must be dialogues
+                match ctx.last_mut().ok_or_else(|| {
+                    ParseError::SyntaxError(
                         path.to_string(),
                         i,
-                        line.len(),
-                        format!("Unknown directive {}", directive),
-                    ))?,
-                }));
-            } else if line.trim().len() != 0 {
-                // the rest here must be dialogues
-                match ctx.last_mut().ok_or(ParseError::SyntaxError(
-                    path.to_string(),
-                    i,
-                    0,
-                    "Unmatched dialogue with character".to_string(),
-                ))? {
+                        0,
+                        "Unmatched dialogue with character".to_string(),
+                    )
+                })? {
                     ScriptContext::Dialogue(dialogue) => dialogue.dialogues.push({
                         let mut line = line.to_string();
                         line.retain(|c| c != '\r');
                         line
                     }),
-                    _ => Err(ParseError::SyntaxError(
-                        path.to_string(),
-                        i,
-                        0,
-                        "Unmatched dialogue with character".to_string(),
-                    ))?,
+                    _ => {
+                        return Err(ParseError::SyntaxError(
+                            path.to_string(),
+                            i,
+                            0,
+                            "Unmatched dialogue with character".to_string(),
+                        ))
+                    }
                 }
             }
         }
