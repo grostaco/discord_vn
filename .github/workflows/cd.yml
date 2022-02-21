@@ -1,0 +1,35 @@
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build_windows_binary:
+    name: Build Window binaries
+    runs-on: windows-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v2
+    - name: Install Windows toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        default: true
+    - name: Compile binaries
+      run: |
+        cargo build --bin engine --release 
+        cargo build --bin discord --release
+    - name: Prepare release environment
+      run: |
+        copy -r .github/release_template engine
+        copy -r .github/release_template discord
+        move target/release/discord.exe discord/
+        move target/release/engine.exe engine/
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'ref/tags/')
+      with:
+        generate_release_notes: true
+        files: |
+          discord
+          engine
