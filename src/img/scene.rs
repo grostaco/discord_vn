@@ -9,15 +9,16 @@ use super::{
     size::Size,
 };
 
-pub struct Scene<'a> {
-    pub font: Font<'a>,
+#[derive(Clone, Debug)]
+pub struct Scene {
+    pub font: Font<'static>,
     pub scale: Scale,
     pub screen: Size,
     pub sprite: Size,
     pub text: Size,
 }
 
-impl<'a> Scene<'a> {
+impl Scene {
     pub fn draw_dialogue(
         &self,
         bg: Option<&DynamicImage>,

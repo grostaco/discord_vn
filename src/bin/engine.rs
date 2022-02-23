@@ -61,7 +61,7 @@ fn main() {
         .get("script_path")
         .unwrap_or_else(|| log!(err, "script_path not set in [Path]"));
     println!("[*] Engine initializing, searching for {}", script_path);
-    match Engine::from_file(script_path.as_str(), &scene) {
+    match Engine::from_file(script_path.as_str(), scene) {
         Ok(mut engine) => {
             println!("[*] Engine initialized. Rendering...");
             println!("[!] It should be noted that if there are conditional jumps in the script, you will be prompted.");

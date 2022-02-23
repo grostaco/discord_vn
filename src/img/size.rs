@@ -1,3 +1,4 @@
+#[derive(Clone, Debug)]
 pub struct Size {
     pub xmin: u32,
     pub xmax: u32,

@@ -11,17 +11,17 @@ use crate::{
     Scene,
 };
 
-pub struct Engine<'s> {
+pub struct Engine {
     pub script: Script,
     pub iscript: usize,
-    scene: &'s Scene<'s>,
+    scene: Scene,
     sprites: HashMap<String, SpriteDirective>,
     cached_bgs: HashMap<String, DynamicImage>,
     bg_path: Option<String>,
 }
 
-impl<'s> Engine<'s> {
-    pub fn from_file(script_path: &str, scene: &'s Scene) -> Result<Self, ParseError> {
+impl Engine {
+    pub fn from_file(script_path: &str, scene: Scene) -> Result<Self, ParseError> {
         Ok(Self {
             script: Script::from_file(script_path)?,
             iscript: 0,

@@ -22,17 +22,13 @@ use crate::{
 use super::voice::play_url;
 
 struct PlayInfo(u64, u64, String);
-pub struct Begin<'s> {
+pub struct Begin {
     config: Config,
-    engine: Engine<'s>,
+    engine: Engine,
 }
 
-impl<'s> Begin<'s> {
-    pub fn new(
-        config_file: &str,
-        script_file: &str,
-        scene: &'s Scene<'s>,
-    ) -> Result<Self, ParseError> {
+impl Begin {
+    pub fn new(config_file: &str, script_file: &str, scene: Scene) -> Result<Self, ParseError> {
         Ok(Self {
             config: Config::from_file(config_file)?,
             engine: Engine::from_file(script_file, scene)?,

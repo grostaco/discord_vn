@@ -10,22 +10,22 @@ use crate::Scene;
 
 use super::display::Begin;
 
-pub struct Handler<'a> {
+pub struct Handler {
     pub config_path: String,
     pub guild_id: u64,
     pub script_path: String,
-    pub scene: Scene<'a>,
+    pub scene: Scene,
 }
 
 #[async_trait]
-impl<'a> EventHandler for Handler<'a> {
+impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             match command.data.name.as_str() {
                 "begin" => Begin::new(
                     self.config_path.as_str(),
                     self.script_path.as_str(),
-                    &self.scene,
+                    self.scene.clone(),
                 )
                 .unwrap_or_else(|e| {
                     eprintln!("{}", e);
