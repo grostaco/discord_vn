@@ -1,5 +1,5 @@
 # Discord VN Engine
-A visual novel scripting language which renders as interactable components on discord. 
+A visual novel scripting language which renders as interactable components on discord. To get started on scripting, visit [our friendly guide](https://github.com/grostaco/discord_vn/blob/main/docs/README.md)
 
 # Table of contents
 - [Usage](#usage)
