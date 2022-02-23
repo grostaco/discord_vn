@@ -131,5 +131,7 @@ WIP
 ## Loading sprites
 WIP
 
+## Play music
+
 ## Deploying to Discord
 To deploy to discord visit this project's README and register a bot application. Once you have, download `discord.zip` and fill `config.conf` with the guild id, the application id, and the token of your bot. Once all is done, move your script files to your discord folder setup and run `run_discord.bat` and voila!
