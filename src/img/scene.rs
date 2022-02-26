@@ -83,7 +83,14 @@ impl Scene {
             self.scale,
             point(
                 self.text.xmin as f32,
-                self.text.ymin as f32 + v_metrics.ascent * 3.0,
+                self.text.ymin as f32
+                    + v_metrics.ascent * {
+                        if character_name.is_empty() {
+                            1.0
+                        } else {
+                            3.0
+                        }
+                    },
             ),
             self.text.xmax,
         );
