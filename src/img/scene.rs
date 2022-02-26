@@ -120,7 +120,6 @@ impl Scene {
                         (ycur, xcur)
                     },
                 );
-            //println!("\ny: {}\nymax: {}", y + vertical_pad as u32, self.text.ymax);
             if y + vertical_pad + glyphs_height < self.text.ymax {
                 break;
             }
