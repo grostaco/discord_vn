@@ -34,6 +34,13 @@ pub struct LoadBGDirective {
 }
 
 #[derive(Clone, Debug)]
+pub struct CharacterAttributeDirective {
+    pub character: String,
+    pub text_color: Option<u32>,
+    pub dialogue_color: Option<u32>,
+}
+
+#[derive(Clone, Debug)]
 pub struct CustomDirective {
     pub name: String,
     pub args: Vec<String>,
@@ -147,6 +154,52 @@ impl Directive for CustomDirective {
             name: directive,
             args,
         })
+    }
+}
+
+impl Directive for CharacterAttributeDirective {
+    fn from_context(ctx: &str) -> Result<Self, ParseError> {
+        let mut args = ctx.split(',').take(3);
+        let character = args.next().ok_or_else(|| {
+            ParseError::DirectiveError(
+                "cattr",
+                "expected character to set attribute to".to_string(),
+            )
+        })?;
+        let attribute = args
+            .next()
+            .ok_or_else(|| ParseError::DirectiveError("cattr", "expected attribute".to_string()))?
+            .trim();
+        let value = args
+            .next()
+            .ok_or_else(|| {
+                ParseError::DirectiveError("cattr", "expected value of attribute".to_string())
+            })?
+            .trim();
+
+        let mut cattr = Self {
+            character: character.trim().to_string(),
+            text_color: None,
+            dialogue_color: None,
+        };
+        match attribute {
+            "dialogue_color" => {
+                cattr.dialogue_color = Some(u32::from_str_radix(value, 16).map_err(|_| {
+                    ParseError::DirectiveError(
+                        "cattr",
+                        format!("cannot parse dialogue_color {}", value),
+                    )
+                })?);
+            }
+            _ => {
+                return Err(ParseError::DirectiveError(
+                    "cattr",
+                    format!("unknown attribute {}", attribute),
+                ));
+            }
+        }
+
+        Ok(cattr)
     }
 }
 

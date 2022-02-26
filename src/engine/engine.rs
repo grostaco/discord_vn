@@ -18,6 +18,13 @@ pub struct Engine {
     sprites: HashMap<String, SpriteDirective>,
     cached_bgs: HashMap<String, DynamicImage>,
     bg_path: Option<String>,
+    /// Character attributes
+    character_attribute: HashMap<String, CharacterAttribute>,
+}
+
+pub struct CharacterAttribute {
+    text_color: Option<u32>,
+    dialogue_color: Option<u32>,
 }
 
 impl Engine {
@@ -29,6 +36,7 @@ impl Engine {
             sprites: HashMap::new(),
             cached_bgs: HashMap::new(),
             bg_path: None,
+            character_attribute: HashMap::new(),
         })
     }
 
@@ -67,6 +75,28 @@ impl Engine {
                         if !self.cached_bgs.contains_key(&bg.bg_path) {
                             self.cached_bgs
                                 .insert(bg.bg_path.to_string(), load_image(&bg.bg_path)?);
+                        }
+                        self.iscript += 1;
+                    }
+                    ScriptDirective::Cattr(cattr) => {
+                        match self.character_attribute.get_mut(cattr.character.as_str()) {
+                            Some(s_cattr) => {
+                                if let Some(v) = cattr.dialogue_color {
+                                    s_cattr.dialogue_color = Some(v)
+                                }
+                                if let Some(v) = cattr.text_color {
+                                    s_cattr.text_color = Some(v);
+                                }
+                            }
+                            None => {
+                                self.character_attribute.insert(
+                                    cattr.character.to_string(),
+                                    CharacterAttribute {
+                                        text_color: cattr.text_color,
+                                        dialogue_color: cattr.dialogue_color,
+                                    },
+                                );
+                            }
                         }
                         self.iscript += 1;
                     }
@@ -129,6 +159,18 @@ impl Engine {
                             .dialogues
                             .iter()
                             .fold(String::new(), |a, b| a + " " + b),
+                        self.character_attribute
+                            .get(&dialogue.character_name)
+                            .map(|cattr| {
+                                cattr.dialogue_color.map(|c| {
+                                    let a = c & 0xFF;
+                                    let b = (c >> 8) & 0xFF;
+                                    let g = (c >> 16) & 0xFF;
+                                    let r = (c >> 24) & 0xFF;
+                                    [r as u8, g as u8, b as u8, a as u8]
+                                })
+                            })
+                            .unwrap_or(None),
                     ),
                 ),
                 ScriptContext::Directive(directive) => match directive {

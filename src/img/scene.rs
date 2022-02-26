@@ -25,6 +25,7 @@ impl Scene {
         sprites: Vec<&SpriteDirective>,
         character_name: &str,
         dialogue: &str,
+        dialogue_background: Option<[u8; 4]>,
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
@@ -50,8 +51,9 @@ impl Scene {
             }
         }
 
+        let dialogue_background = dialogue_background.unwrap_or([0, 0, 0, 255 / 2]);
         for pixel in text_box.pixels_mut() {
-            pixel.0 = [0, 0, 0, 255 / 2];
+            pixel.0 = dialogue_background;
         }
 
         overlay(

@@ -117,6 +117,9 @@ fn main() {
                                 println!("[*] Unloading sprite {}", sprite.name)
                             }
                         }
+                        ScriptDirective::Cattr(cattr) => {
+                            println!("[*] Setting attribute for character \"{}\" with dialogue color \"{:?}\" and text color \"{:?}\"", cattr.character, cattr.dialogue_color, cattr.text_color);
+                        }
                         ScriptDirective::Custom(custom) => {
                             println!("[*] Ignoring custom directive {:#?}", custom)
                         }
