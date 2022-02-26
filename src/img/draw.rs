@@ -3,8 +3,6 @@ use rusttype::{Font, Point, PositionedGlyph, Scale};
 
 use super::error::LoadImageError;
 
-const WHITESPACE_PAD: u32 = 16;
-
 pub fn draw_words<'a, 'i>(
     text: &str,
     color: &Rgba<u8>,
@@ -21,20 +19,21 @@ pub fn draw_words<'a, 'i>(
         .split(' ')
         .map(|word| font.layout(word, scale, point).collect::<Vec<_>>())
         .collect();
+    let whitespace_width = glyphs_width(&font.layout("_", scale, point).collect::<Vec<_>>());
 
     let (mut xcur, mut ycur) = (0, 0);
     for glyphs in glyphs_vec {
         if !glyphs.is_empty() {
             let width = glyphs_width(&glyphs);
 
-            if xcur + width + WHITESPACE_PAD > xmax {
+            if xcur + width + whitespace_width > xmax {
                 xcur = 0;
                 ycur += glyphs_height;
             }
 
             draw_layout(image, &glyphs, color, xcur as f32, ycur as f32);
 
-            xcur += width + WHITESPACE_PAD;
+            xcur += width + whitespace_width;
         }
     }
 

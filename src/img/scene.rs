@@ -75,22 +75,73 @@ impl Scene {
             ),
         );
 
+        let name_height = {
+            let v = self.font.v_metrics(self.scale);
+            v.ascent - v.descent
+        };
+
+        let mut scale = self.scale;
+        let vertical_pad = (v_metrics.ascent * {
+            if character_name.is_empty() {
+                1.0
+            } else {
+                3.0
+            }
+        })
+        .ceil() as u32;
+
+        let ycur = self.text.ymin;
+        let mut v_metrics;
+        let mut glyphs_height;
+        loop {
+            v_metrics = self.font.v_metrics(scale);
+            glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
+            let whitespace_width = glyphs_width(
+                &self
+                    .font
+                    .layout("_", scale, point(0., 0.))
+                    .collect::<Vec<_>>(),
+            );
+            let (y, _) = dialogue
+                .split(' ')
+                .map(|word| as_glyphs(word, &self.font, scale, point(0., 0.)))
+                .fold(
+                    (ycur, self.text.xmin + whitespace_width),
+                    |(mut ycur, mut xcur), glyphs| {
+                        if !glyphs.is_empty() {
+                            let width = glyphs_width(&glyphs);
+                            if xcur + width + whitespace_width > self.text.xmax {
+                                ycur += glyphs_height;
+                                xcur = 0;
+                            }
+                            xcur += width + whitespace_width;
+                        }
+
+                        (ycur, xcur)
+                    },
+                );
+            //println!("\ny: {}\nymax: {}", y + vertical_pad as u32, self.text.ymax);
+            if y + vertical_pad + glyphs_height < self.text.ymax {
+                break;
+            }
+            scale = Scale::uniform(scale.x * 0.95);
+        }
+
         draw_words(
             dialogue,
             white,
             &mut image,
             &self.font,
-            self.scale,
+            scale,
             point(
                 self.text.xmin as f32,
-                self.text.ymin as f32
-                    + v_metrics.ascent * {
-                        if character_name.is_empty() {
-                            1.0
-                        } else {
-                            3.0
-                        }
-                    },
+                self.text.ymin as f32 + {
+                    if character_name.is_empty() {
+                        glyphs_height as f32
+                    } else {
+                        name_height + glyphs_height as f32
+                    }
+                },
             ),
             self.text.xmax,
         );
