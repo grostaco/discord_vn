@@ -53,7 +53,7 @@ impl Directive for JumpDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
         let ctx = ctx.split(',').take(3).collect::<Vec<_>>();
         let (choices, endpoint) = match &ctx[..] {
-            [a, b, endpoint] => (Some((a.to_string(), b.to_string())), endpoint),
+            [a, b, endpoint] => (Some((a.trim().to_string(), b.trim().to_string())), endpoint),
             [endpoint] => (None, endpoint),
             _ => {
                 return Err(ParseError::DirectiveError(
