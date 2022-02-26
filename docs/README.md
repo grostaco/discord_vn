@@ -16,7 +16,7 @@ Let's begin writing writing our first dialogue ⚡
 'Tis but a flesh wound!
 ```
 
-Now to render it ✨ If you don't have `engine.exe` and its files yet, go get them [here](https://github.com/grostaco/discord_vn/releases/tag/latest). Once you have them ready your directory should look something like
+Now to render it ✨ If you don't have `engine.exe` and its files yet, go get them [here](https://github.com/grostaco/discord_vn/releases/latest). Once you have them ready your directory should look something like
 ```
 .
 ├── engine.exe
