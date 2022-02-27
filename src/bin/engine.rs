@@ -72,7 +72,8 @@ fn main() {
                         println!(
                             "[*] Rendering dialogue: \"{}\"",
                             dialogue.dialogues.iter().fold(String::new(), |a, b| a + b)
-                        )
+                        );
+                        rendered += 1;
                     }
                     ScriptContext::Directive(directive) => match directive {
                         ScriptDirective::LoadBG(loadbg) => {
@@ -80,6 +81,7 @@ fn main() {
                         }
                         ScriptDirective::Jump(jump) => match &jump.choices {
                             Some((a, b)) => {
+                                rendered += 1;
                                 let mut buf = String::new();
                                 loop {
                                     println!(
@@ -126,7 +128,6 @@ fn main() {
                     },
                 };
                 engine.render_to(&format!("resources/render/render_{}.png", rendered));
-                rendered += 1;
                 if let Err(e) = engine.next(choice) {
                     log!(err, e);
                 }
