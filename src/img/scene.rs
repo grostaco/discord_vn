@@ -120,7 +120,7 @@ impl Scene {
                         (ycur, xcur)
                     },
                 );
-            if y + vertical_pad + glyphs_height < self.text.ymax {
+            if y + vertical_pad + glyphs_height * 2 < self.text.ymax {
                 break;
             }
             scale = Scale::uniform(scale.x * 0.95);
