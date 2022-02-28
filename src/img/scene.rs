@@ -36,7 +36,12 @@ impl Scene {
             ImageBuffer::new(self.screen.xmax, self.text.ymax - self.text.ymin);
 
         if let Some(bg) = bg {
-            overlay(&mut image, bg, 0, 0);
+            let resized_bg = bg.resize_exact(
+                self.screen.xmax - self.screen.xmin,
+                self.screen.ymax - self.screen.ymin,
+                image::imageops::FilterType::Gaussian,
+            );
+            overlay(&mut image, &resized_bg, 0, 0);
         }
 
         for sprite in sprites {
