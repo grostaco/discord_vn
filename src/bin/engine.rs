@@ -1,4 +1,4 @@
-use std::{io, process::exit};
+use std::{fs, io, process::exit};
 
 use image_rpg::{
     engine::{ScriptContext, ScriptDirective},
@@ -65,6 +65,11 @@ fn main() {
         Ok(mut engine) => {
             println!("[*] Engine initialized. Rendering...");
             println!("[!] It should be noted that if there are conditional jumps in the script, you will be prompted.");
+            println!("[*] Removing previous render files");
+            for file in fs::read_dir("resources/render").unwrap().flatten() {
+                println!("[*] Removing file {}", file.file_name().to_str().unwrap());
+                fs::remove_file(file.path()).unwrap();
+            }
             while let Some(ctx) = engine.current() {
                 let mut choice = false;
                 match ctx {
