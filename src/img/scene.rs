@@ -1,4 +1,4 @@
-use image::{imageops::overlay, DynamicImage, ImageBuffer, Pixel, Rgba};
+use image::{imageops::overlay, DynamicImage, GenericImageView, ImageBuffer, Pixel, Rgba};
 use rusttype::{point, Font, Scale};
 
 use crate::engine::SpriteDirective;
@@ -47,11 +47,12 @@ impl Scene {
         for sprite in sprites {
             if let Some(sprite_path) = &sprite.sprite_path {
                 let sprite_img = load_image(sprite_path).expect("Unable to load sprite");
+                let (width, height) = sprite_img.dimensions();
                 overlay(
                     &mut image,
                     &sprite_img,
-                    sprite.x.unwrap(),
-                    sprite.y.unwrap(),
+                    (sprite.x.unwrap() - width / 2).max(0),
+                    (sprite.y.unwrap() - height / 2).max(0),
                 );
             }
         }
@@ -171,7 +172,12 @@ impl Scene {
         }
 
         if let Some(bg) = bg {
-            overlay(&mut image, bg, 0, 0);
+            let resized_bg = bg.resize_exact(
+                self.screen.xmax - self.screen.xmin,
+                self.screen.ymax - self.screen.ymin,
+                image::imageops::FilterType::Gaussian,
+            );
+            overlay(&mut image, &resized_bg, 0, 0);
         }
 
         let a_glyphs = &as_glyphs(
