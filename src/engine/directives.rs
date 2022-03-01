@@ -40,6 +40,21 @@ pub struct CharacterAttributeDirective {
     pub dialogue_color: Option<u32>,
 }
 
+// @attr(choice.color, COLOR)
+// @attr(characters.Name.dialogue_color, COLOR)
+/*
+#[derive(Clone, Debug)]
+pub enum Field {
+    Attribute(AttributeDirective),
+    Value(String),
+} */
+#[derive(Clone, Debug)]
+pub struct AttributeDirective {
+    pub path: String,
+    pub key: String,
+    pub value: String,
+}
+
 #[derive(Clone, Debug)]
 pub struct CustomDirective {
     pub name: String,
@@ -126,14 +141,6 @@ impl Directive for LoadBGDirective {
             bg_path: ctx.to_owned(),
         })
     }
-    /*
-                bg: load_image(ctx).map_err(|e| match e {
-                LoadImageError::ImageError(img) => {
-                    ParseError::ImageError(ctx.to_string(), img.to_string().to_ascii_lowercase())
-                }
-                LoadImageError::IoError(_) => ParseError::NoFileExists(ctx.to_string()),
-            })?,
-    */
 }
 
 impl Directive for CustomDirective {
@@ -217,3 +224,57 @@ impl LazilyLoadedScript {
             .clone()
     }
 }
+
+impl Directive for AttributeDirective {
+    fn from_context(ctx: &str) -> Result<Self, ParseError> {
+        let mut pair = ctx.split(',').map(str::trim).map(str::to_string).take(2);
+        let path = pair
+            .next()
+            .ok_or_else(|| ParseError::DirectiveError("attr", "expected key".to_string()))?;
+        let value = pair
+            .next()
+            .ok_or_else(|| ParseError::DirectiveError("attr", "expected value".to_string()))?;
+        let (path, key) = path.split_at(path.rfind('.').unwrap_or(0));
+        Ok(Self {
+            path: path.to_string(),
+            key: key.trim_matches('.').to_string(),
+            value,
+        })
+        /*
+            let mut pair = ctx.split(',').map(str::trim).map(str::to_string).take(2);
+            let key = pair
+                .next()
+                .ok_or_else(|| ParseError::DirectiveError("attr", "expected key".to_string()))?;
+            let value = pair
+                .next()
+                .ok_or_else(|| ParseError::DirectiveError("attr", "expected value".to_string()))?;
+
+            let mut attrs = key.split('.').rev();
+
+            let mut current = AttributeDirective {
+                header: attrs.next().unwrap().to_string(),
+                field: Box::new(Field::Value(value)),
+            };
+            for attr in attrs {
+                current = AttributeDirective {
+                    header: attr.to_string(),
+                    field: Box::new(Field::Attribute(current)),
+                }
+            }
+            Ok(current)
+        } */
+    }
+}
+
+/*
+#[cfg(test)]
+mod test {
+    use super::{AttributeDirective, Directive};
+
+    #[test]
+    fn test_attr() {
+        let attr = AttributeDirective::from_context("a, 1").unwrap();
+        println!("{:#?}", attr);
+    }
+}
+ */

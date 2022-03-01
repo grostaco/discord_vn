@@ -1,6 +1,6 @@
 use super::{
     directives::{Directive, JumpDirective, LoadBGDirective, SpriteDirective},
-    CharacterAttributeDirective, CustomDirective, ParseError,
+    AttributeDirective, CustomDirective, ParseError,
 };
 use std::{fmt::Debug, fs, io};
 #[derive(Clone, Debug)]
@@ -30,7 +30,7 @@ pub enum ScriptDirective {
     Jump(JumpDirective),
     Sprite(SpriteDirective),
     LoadBG(LoadBGDirective),
-    Cattr(CharacterAttributeDirective),
+    Attr(AttributeDirective),
     Custom(CustomDirective),
 }
 
@@ -105,8 +105,8 @@ impl Script {
                         i,
                         line.len()
                     )?),
-                    "cattr" => ScriptDirective::Cattr(to_syntax_error!(
-                        CharacterAttributeDirective::from_context(context),
+                    "attr" => ScriptDirective::Attr(to_syntax_error!(
+                        AttributeDirective::from_context(context),
                         path.to_string(),
                         i,
                         line.len()
