@@ -1,14 +1,19 @@
-use std::{fs, io, process::exit};
-
+use env_logger::fmt::Color;
 use image_rpg::{
     engine::{ScriptContext, ScriptDirective},
     Config, Engine, Scene, Size,
 };
+use log::{debug, error, info, Level};
 use rusttype::{Font, Scale};
+use std::{
+    fs,
+    io::{self, Write},
+    process::exit,
+};
 
 macro_rules! log {
     (dbg,$x:expr) => {
-        println!("[*] {}", $x);
+        info!("{}", $x);
     };
     (info,$x:expr) => {
         println!("[!] {}", $x);
@@ -23,12 +28,28 @@ macro_rules! log {
 }
 
 fn main() {
-    println!("[*] Discord VN scripting engine\n[*] ver 1.0.0");
+    env_logger::init();
+
+    env_logger::builder().format(|buf, record| {
+        let normal_style = buf.style();
+        let mut info_style = buf.style();
+        info_style.set_color(Color::Green);
+        writeln!(
+            buf,
+            "{}: {}",
+            match record.level() {
+                Level::Info => info_style.value("I"),
+                _ => normal_style.value("?"),
+            },
+            record.args()
+        )
+    });
+    info!("Discord VN scripting engine v1.0.0");
 
     let font_data = include_bytes!("../../resources/fonts/cour.ttf");
-    println!("[*] Loading font");
+    debug!("Loading font");
     let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
-    println!("[*] Font loaded");
+    debug!("Font loaded");
 
     let scene = Scene {
         font,
@@ -52,6 +73,7 @@ fn main() {
             ymax: 480,
         },
     };
+
     let config = Config::from_file("resources/config.conf").unwrap_or_else(|e| log!(err, e));
     let mut rendered = 0;
     let script_path = config
@@ -60,37 +82,37 @@ fn main() {
         .unwrap_or_else(|| log!(err, "Cannot find [Path] in config file"))
         .get("script_path")
         .unwrap_or_else(|| log!(err, "script_path not set in [Path]"));
-    println!("[*] Engine initializing, searching for {}", script_path);
+    debug!("Engine initializing, searching for {}", script_path);
     match Engine::from_file(script_path.as_str(), scene) {
         Ok(mut engine) => {
-            println!("[*] Engine initialized. Rendering...");
-            println!("[!] It should be noted that if there are conditional jumps in the script, you will be prompted.");
-            println!("[*] Removing previous render files");
+            debug!("Engine initialized. Rendering...");
+            info!("It should be noted that if there are conditional jumps in the script, you will be prompted.");
+            debug!("Removing previous render files");
             for file in fs::read_dir("resources/render").unwrap().flatten() {
-                println!("[*] Removing file {}", file.file_name().to_str().unwrap());
+                debug!("Removing file {}", file.file_name().to_str().unwrap());
                 fs::remove_file(file.path()).unwrap();
             }
             while let Some(ctx) = engine.current() {
                 let mut choice = false;
                 match ctx {
                     ScriptContext::Dialogue(dialogue) => {
-                        println!(
-                            "[*] Rendering dialogue: \"{}\"",
+                        debug!(
+                            "Rendering dialogue: \"{}\"",
                             dialogue.dialogues.iter().fold(String::new(), |a, b| a + b)
                         );
                         rendered += 1;
                     }
                     ScriptContext::Directive(directive) => match directive {
                         ScriptDirective::LoadBG(loadbg) => {
-                            println!("[*] Loading background {}", loadbg.bg_path);
+                            debug!("Loading background {}", loadbg.bg_path);
                         }
                         ScriptDirective::Jump(jump) => match &jump.choices {
                             Some((a, b)) => {
                                 rendered += 1;
                                 let mut buf = String::new();
                                 loop {
-                                    println!(
-                                    "[?] A conditional choice was found, choose 1 or 2.\n ├──[1] {}\n └──[2] {}",
+                                    info!(
+                                    "A conditional jump was found, choose 1 or 2.\n[1] {}\n[2] {}",
                                     a, b
                                 );
                                     io::stdin().read_line(&mut buf).unwrap();
@@ -104,43 +126,43 @@ fn main() {
                                                 choice = false;
                                                 break;
                                             }
-                                            _ => println!(
-                                            "[!] The choice must be either 1 or 2. Reprompting."
-                                        ),
+                                            _ => error!(
+                                                "The choice must be either 1 or 2. Reprompting."
+                                            ),
                                         },
                                         Err(_) => {
-                                            println!("[!] The choice number must be an integer. Reprompting.");
+                                            error!("The choice number must be an integer. Reprompting.");
                                         }
                                     }
                                     buf.clear();
                                 }
                             }
-                            None => println!("[*] Jumping to {}", jump.endpoint.script_path),
+                            None => debug!("Jumping to {}", jump.endpoint.script_path),
                         },
                         ScriptDirective::Sprite(sprite) => {
                             if let Some(sprite_path) = &sprite.sprite_path {
-                                println!("[*] Loading sprite {}", sprite_path)
+                                debug!("Loading sprite {}", sprite_path)
                             } else {
-                                println!("[*] Unloading sprite {}", sprite.name)
+                                debug!("Unloading sprite {}", sprite.name)
                             }
                         }
-                        ScriptDirective::Cattr(cattr) => {
-                            println!("[*] Setting attribute for character \"{}\" with dialogue color \"{:?}\" and text color \"{:?}\"", cattr.character, cattr.dialogue_color, cattr.text_color);
+                        ScriptDirective::Attr(attr) => {
+                            debug!("Got attribute {:?}", attr);
                         }
                         ScriptDirective::Custom(custom) => {
-                            println!("[*] Ignoring custom directive {:#?}", custom)
+                            debug!("Ignoring custom directive {:#?}", custom)
                         }
                     },
                 };
                 engine.render_to(&format!("resources/render/render_{}.png", rendered));
                 if let Err(e) = engine.next(choice) {
-                    log!(err, e);
+                    error!("Cannot continue loading script: {}", e);
                 }
             }
         }
         Err(e) => {
-            println!("[!] {}", e);
-            println!("[!] Cannot initialize script.txt. Aborting.");
+            error!("{}", e);
+            error!("Cannot initialize script.txt. Aborting.");
             exit(0);
         }
     }
