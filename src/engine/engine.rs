@@ -10,7 +10,7 @@ use crate::{
     Scene,
 };
 
-macro_rules! cast {
+macro_rules! attr_cast {
     ($val:expr => $variant:path) => {
         match $val {
             $variant(v) => v,
@@ -30,12 +30,15 @@ pub struct Engine {
     attributes: Attributes,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum Number {
+    PosInt(u64),
+    NegInt(i64),
+    Float(f64),
+}
+
 #[derive(Debug, Clone)]
 pub struct Attributes(HashMap<String, AttributeValue>);
-// a.b.c x
-// {'a': <attribute B>}
-// {'a': {'b': <attribute C>}}
-// {'a': {'b': {'c': x}}}
 #[derive(Debug, Clone)]
 pub enum AttributeValue {
     Attribute(Attributes),
@@ -57,6 +60,25 @@ impl Attributes {
         self.0.get(key)
     }
 
+    pub fn get_path(&self, path: &str) -> Option<&AttributeValue> {
+        let mut attrs = path.trim().split('.');
+        let mut ret = match self.get(attrs.next().unwrap()) {
+            Some(r) => r,
+            None => return None,
+        };
+        for attr in attrs {
+            if let Some(a) = ret.as_attribute() {
+                ret = match a.get(attr) {
+                    Some(a) => a,
+                    None => return None,
+                }
+            } else {
+                return None;
+            }
+        }
+        Some(ret)
+    }
+
     pub fn add_attribute(&mut self, attr: &AttributeDirective) {
         let mut attrs = attr.path.split('.');
         let s = attrs.next().unwrap();
@@ -66,12 +88,12 @@ impl Attributes {
                 self.0
                     .insert(s.to_string(), AttributeValue::Attribute(Self::new()));
             }
-            let mut v = cast!(self.0.get_mut(s).unwrap() => AttributeValue::Attribute);
+            let mut v = self.0.get_mut(s).unwrap().as_attribute_mut().unwrap();
             for attr in attrs {
                 if !v.0.contains_key(attr) {
                     v.0.insert(attr.to_string(), AttributeValue::Attribute(Self::new()));
                 }
-                v = cast!(v.0.get_mut(attr).unwrap() => AttributeValue::Attribute);
+                v = attr_cast!(v.0.get_mut(attr).unwrap() => AttributeValue::Attribute);
             }
             v.0.insert(attr.key.clone(), AttributeValue::Value(attr.value.clone()));
         } else {
@@ -80,69 +102,55 @@ impl Attributes {
         }
     }
 }
-/*
 
-let mut ctab = self.0.get_mut(attrs.next().unwrap()).unwrap();
-        if let Some((last, attrs)) = .collect::<Vec<_>>().split_last() {
-            for attr in attrs {
-                ctab = cast!(ctab.get_mut(*attr).unwrap() => AttributeValue::Attribute);
-
-                // ctab = ctab.0.get_mut(*attr).unwrap_or_else(|| {
-                // let v = Self::new();
-                // ctab.0.insert(attr, AttributeValue::Attribute(v)).unwrap();
-                // v
-                // });
-            }
-        }
-        loop {
-            attr = match *attr.field {
-                Field::Attribute(attr) => match *attr.field {
-                    Field::Attribute(_) => attr,
-                    Field::Value(_) => break,
-                },
-                _ => break,
-            };
-
-            match ctab.get_mut(&attr.path).unwrap() {
-                AttributeValue::Attribute(a) => &a.0,
-                AttributeValue::Value(_) => break,
-            }
-        }
-        println!("{:#?}", ctab);
-        // if let Field::Value(v) = *attr.clone().field {
-        // ctab.0
-        // .insert(attr.header, AttributeValue::Value(v.to_string()));
-        // }
-
-    let mut ctab = self;
-    let f = attr;
-    while let Field::Attribute(f) = *attr.field {
-        if let Field::Attribute(f) = *f.field {
-            if let Field::Value(_) = *f.field {
-                break;
-            }
-        }
-        match ctab.0.get_mut(&f.header).unwrap_or_else(|| {
-            &mut ctab
-                .0
-                .insert(f.header, AttributeValue::Attribute(Self::new()))
-                .unwrap()
-        }) {
-            AttributeValue::Attribute(attr) => ctab = attr,
-            _ => {
-                error!("{}", "receieved a value to an attribute")
-            }
+impl AttributeValue {
+    pub fn is_attribute(&self) -> bool {
+        self.as_attribute().is_some()
+    }
+    pub fn as_attribute(&self) -> Option<&Attributes> {
+        match self {
+            Self::Attribute(attr) => Some(attr),
+            _ => None,
         }
     }
-    if let Field::Value(v) = *f.field {
-        ctab.0.insert(f.header, AttributeValue::Value(v));
-    }
-} */
 
-// pub struct CharacterAttribute {
-// text_color: Option<u32>,
-// dialogue_color: Option<u32>,
-// }
+    pub fn as_attribute_mut(&mut self) -> Option<&mut Attributes> {
+        match self {
+            Self::Attribute(attr) => Some(attr),
+            _ => None,
+        }
+    }
+
+    pub fn as_value(&self) -> Option<&str> {
+        match self {
+            Self::Value(value) => Some(value),
+            _ => None,
+        }
+    }
+}
+
+impl Number {
+    pub fn as_f64(&self) -> Option<f64> {
+        match self {
+            Number::Float(f) => Some(*f),
+            Number::PosInt(_) | Number::NegInt(_) => None,
+        }
+    }
+
+    pub fn as_i64(&self) -> Option<i64> {
+        match self {
+            Number::NegInt(i) => Some(*i),
+            _ => None,
+        }
+    }
+
+    pub fn as_u64(&self) -> Option<u64> {
+        match self {
+            Number::PosInt(u) => Some(*u),
+            _ => None,
+        }
+    }
+}
 
 impl Engine {
     pub fn from_file(script_path: &str, scene: Scene) -> Result<Self, ParseError> {
@@ -197,26 +205,6 @@ impl Engine {
                     }
                     ScriptDirective::Attr(attr) => {
                         self.attributes.add_attribute(attr);
-                        /*
-                        match self.character_attribute.get_mut(cattr.character.as_str()) {
-                            Some(s_cattr) => {
-                                if let Some(v) = cattr.dialogue_color {
-                                    s_cattr.dialogue_color = Some(v)
-                                }
-                                if let Some(v) = cattr.text_color {
-                                    s_cattr.text_color = Some(v);
-                                }
-                            }
-                            None => {
-                                self.character_attribute.insert(
-                                    cattr.character.to_string(),
-                                    CharacterAttribute {
-                                        text_color: cattr.text_color,
-                                        dialogue_color: cattr.dialogue_color,
-                                    },
-                                );
-                            }
-                        }  */
                         self.iscript += 1;
                     }
                     ScriptDirective::Custom(_) => {
@@ -272,45 +260,13 @@ impl Engine {
                         self.bg_path
                             .as_ref()
                             .and_then(|bg_path| self.cached_bgs.get(bg_path)),
-                        self.sprites.values().collect::<Vec<_>>(),
+                        self.sprites.values().collect(),
                         &dialogue.character_name,
                         &dialogue
                             .dialogues
                             .iter()
                             .fold(String::new(), |a, b| a + " " + b),
-                        match self.attributes.get("character") {
-                            Some(attr) => Some(
-                                cast!(attr => AttributeValue::Attribute)
-                                    .get(&dialogue.character_name)
-                                    .map(|val| {
-                                        let c = u32::from_str_radix(
-                                            cast!(val => AttributeValue::Value),
-                                            16,
-                                        )
-                                        .unwrap();
-                                        let a = c & 0xFF;
-                                        let b = (c >> 8) & 0xFF;
-                                        let g = (c >> 16) & 0xFF;
-                                        let r = (c >> 24) & 0xFF;
-                                        [r as u8, g as u8, b as u8, a as u8]
-                                    })
-                                    .unwrap_or([0, 0, 0, 255 / 2]),
-                            ),
-                            None => Some([0, 0, 0, 255 / 2]),
-                        }, /*self.attributes
-                           .get("character")
-                           (&dialogue.character_name)
-                           .map(|cattr| {
-                               // cattr.dialogue_color.map(|c| {
-                               // let a = c & 0xFF;
-                               // let b = (c >> 8) & 0xFF;
-                               // let g = (c >> 16) & 0xFF;
-                               // let r = (c >> 24) & 0xFF;
-                               // [r as u8, g as u8, b as u8, a as u8]
-                               Some([0, 0, 0, 255 / 2])
-                               // })
-                           })
-                           .unwrap_or(None)*/
+                        &self.attributes,
                     ),
                 ),
                 ScriptContext::Directive(directive) => match directive {
@@ -349,8 +305,8 @@ mod test {
         attrs.add_attribute(&AttributeDirective::from_context("a.b.c, 1").unwrap());
         //attrs.add_attribute(AttributeDirective::from_context("a.b, 1").unwrap());
         attrs.add_attribute(&AttributeDirective::from_context("a.b.d, 2").unwrap());
-        attrs.add_attribute(&AttributeDirective::from_context("a.e, 2").unwrap());
+        attrs.add_attribute(&AttributeDirective::from_context("a.e, 3").unwrap());
         attrs.add_attribute(&AttributeDirective::from_context("d, 2").unwrap());
-        println!("{:#?}", attrs);
+        println!("{:#?}", attrs.get_path("a.b.c.d"));
     }
 }

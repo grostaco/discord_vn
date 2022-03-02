@@ -1,4 +1,4 @@
-use image_rpg::{img::load_image, Scene, Size, SpriteDirective};
+use image_rpg::{engine::engine::Attributes, img::load_image, Scene, Size, SpriteDirective};
 use rusttype::{Font, Scale};
 
 fn main() {
@@ -40,7 +40,7 @@ fn main() {
         }],
         "Frog",
         "AAAAAAAAAAAAAAAAAAAAAAAA",
-        Some([167, 0, 247, (255. * 0.4) as u8]),
+        &Attributes::default(),
     );
     image.save("image_dialogue.png").unwrap();
     let image = s.draw_choice(

@@ -40,14 +40,6 @@ pub struct CharacterAttributeDirective {
     pub dialogue_color: Option<u32>,
 }
 
-// @attr(choice.color, COLOR)
-// @attr(characters.Name.dialogue_color, COLOR)
-/*
-#[derive(Clone, Debug)]
-pub enum Field {
-    Attribute(AttributeDirective),
-    Value(String),
-} */
 #[derive(Clone, Debug)]
 pub struct AttributeDirective {
     pub path: String,
@@ -90,48 +82,50 @@ impl Directive for SpriteDirective {
     fn from_context(ctx: &str) -> Result<Self, ParseError> {
         let ctx = ctx.split_whitespace().collect::<String>();
 
-        Ok(match &ctx.split(',').collect::<Vec<&str>>()[..] {
-            [name, display, x, y, visibility] => Self {
-                name: name.to_string(),
-                sprite_path: Some(display.to_string()),
-                sprite: None,
-                x: Some(x.parse().expect("x must be an integer")),
-                y: Some(y.parse().expect("y must be an integer")),
-                show: match *visibility {
-                    "show" => true,
-                    "hide" => false,
-                    _ => {
-                        return Err(ParseError::DirectiveError(
-                            "sprite",
-                            "visibility must either be show or hide".into(),
-                        ))
-                    }
+        Ok(
+            match &ctx.split(',').map(str::trim).collect::<Vec<&str>>()[..] {
+                [name, display, x, y, visibility] => Self {
+                    name: name.to_string(),
+                    sprite_path: Some(display.to_string()),
+                    sprite: None,
+                    x: Some(x.parse().expect("x must be an integer")),
+                    y: Some(y.parse().expect("y must be an integer")),
+                    show: match *visibility {
+                        "show" => true,
+                        "hide" => false,
+                        _ => {
+                            return Err(ParseError::DirectiveError(
+                                "sprite",
+                                "visibility must either be show or hide".into(),
+                            ))
+                        }
+                    },
                 },
-            },
-            [name, visibility] => Self {
-                name: name.to_string(),
-                sprite_path: None,
-                x: None,
-                y: None,
-                sprite: None,
-                show: match *visibility {
-                    "hide" => false,
-                    _ => {
-                        return Err(ParseError::DirectiveError(
-                            "sprite",
-                            "Non-hidden sprite directives expect 5 arguments".into(),
-                        ))
-                    }
+                [name, visibility] => Self {
+                    name: name.to_string(),
+                    sprite_path: None,
+                    x: None,
+                    y: None,
+                    sprite: None,
+                    show: match *visibility {
+                        "hide" => false,
+                        _ => {
+                            return Err(ParseError::DirectiveError(
+                                "sprite",
+                                "Non-hidden sprite directives expect 5 arguments".into(),
+                            ))
+                        }
+                    },
                 },
-            },
 
-            _ => {
-                return Err(ParseError::DirectiveError(
-                    "sprite",
-                    "directives expect 5 arguments for show and 2 arguments for hide".into(),
-                ))
-            }
-        })
+                _ => {
+                    return Err(ParseError::DirectiveError(
+                        "sprite",
+                        "directives expect 5 arguments for show and 2 arguments for hide".into(),
+                    ))
+                }
+            },
+        )
     }
 }
 
@@ -240,41 +234,5 @@ impl Directive for AttributeDirective {
             key: key.trim_matches('.').to_string(),
             value,
         })
-        /*
-            let mut pair = ctx.split(',').map(str::trim).map(str::to_string).take(2);
-            let key = pair
-                .next()
-                .ok_or_else(|| ParseError::DirectiveError("attr", "expected key".to_string()))?;
-            let value = pair
-                .next()
-                .ok_or_else(|| ParseError::DirectiveError("attr", "expected value".to_string()))?;
-
-            let mut attrs = key.split('.').rev();
-
-            let mut current = AttributeDirective {
-                header: attrs.next().unwrap().to_string(),
-                field: Box::new(Field::Value(value)),
-            };
-            for attr in attrs {
-                current = AttributeDirective {
-                    header: attr.to_string(),
-                    field: Box::new(Field::Attribute(current)),
-                }
-            }
-            Ok(current)
-        } */
     }
 }
-
-/*
-#[cfg(test)]
-mod test {
-    use super::{AttributeDirective, Directive};
-
-    #[test]
-    fn test_attr() {
-        let attr = AttributeDirective::from_context("a, 1").unwrap();
-        println!("{:#?}", attr);
-    }
-}
- */

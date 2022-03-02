@@ -1,7 +1,8 @@
 use image::{imageops::overlay, DynamicImage, GenericImageView, ImageBuffer, Pixel, Rgba};
 use rusttype::{point, Font, Scale};
 
-use crate::engine::SpriteDirective;
+use crate::engine::{engine::Attributes, SpriteDirective};
+use log::{trace, warn};
 
 use super::{
     draw::{as_glyphs, draw_words, glyphs_width, load_image},
@@ -25,7 +26,7 @@ impl Scene {
         sprites: Vec<&SpriteDirective>,
         character_name: &str,
         dialogue: &str,
-        dialogue_background: Option<[u8; 4]>,
+        attributes: &Attributes,
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
@@ -46,18 +47,42 @@ impl Scene {
 
         for sprite in sprites {
             if let Some(sprite_path) = &sprite.sprite_path {
-                let sprite_img = load_image(sprite_path).expect("Unable to load sprite");
+                let mut sprite_img = load_image(sprite_path).expect("Unable to load sprite");
                 let (width, height) = sprite_img.dimensions();
+                if let Some(scale) = attributes
+                    .get_path(&format!("sprite.{}.scale", character_name))
+                    .map(|f| f.as_value().unwrap().parse::<f64>())
+                {
+                    trace!("{}", "Scaling character");
+                    if let Ok(scale) = scale {
+                        sprite_img = sprite_img.resize_exact(
+                            (width as f64 * scale) as u32,
+                            (height as f64 * scale) as u32,
+                            image::imageops::FilterType::Gaussian,
+                        );
+                    } else {
+                        warn!("{}", "scale cannot be parsed as a float. Ignoring scaling");
+                    }
+                }
                 overlay(
                     &mut image,
                     &sprite_img,
-                    (sprite.x.unwrap() - width / 2).max(0),
-                    (sprite.y.unwrap() - height / 2).max(0),
+                    (sprite.x.unwrap() - width / 2).clamp(self.screen.xmin, self.screen.xmax),
+                    (sprite.y.unwrap() - height / 2).clamp(self.screen.xmin, self.screen.xmax),
                 );
             }
         }
-
-        let dialogue_background = dialogue_background.unwrap_or([0, 0, 0, 255 / 2]);
+        let dialogue_background = attributes
+            .get(character_name)
+            .map(|val| {
+                let c = u32::from_str_radix(val.as_value().unwrap(), 16).unwrap();
+                let a = c & 0xFF;
+                let b = (c >> 8) & 0xFF;
+                let g = (c >> 16) & 0xFF;
+                let r = (c >> 24) & 0xFF;
+                [r as u8, g as u8, b as u8, a as u8]
+            })
+            .unwrap_or([0, 0, 0, 255 / 2]);
         for pixel in text_box.pixels_mut() {
             pixel.0 = dialogue_background;
         }
