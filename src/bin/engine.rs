@@ -1,9 +1,8 @@
-use env_logger::fmt::Color;
 use image_rpg::{
     engine::{ScriptContext, ScriptDirective},
     Config, Engine, Scene, Size,
 };
-use log::{debug, error, info, Level};
+use log::{debug, error, info};
 use rusttype::{Font, Scale};
 use std::{
     fs,
@@ -11,39 +10,9 @@ use std::{
     process::exit,
 };
 
-macro_rules! log {
-    (dbg,$x:expr) => {
-        info!("{}", $x);
-    };
-    (info,$x:expr) => {
-        println!("[!] {}", $x);
-    };
-    (input,$x:expr) => {
-        println!("[?] {}", $x);
-    };
-    (err,$x:expr) => {{
-        println!("[!!] {}. Aborting.", $x);
-        exit(0);
-    }};
-}
-
 fn main() {
     env_logger::init();
 
-    env_logger::builder().format(|buf, record| {
-        let normal_style = buf.style();
-        let mut info_style = buf.style();
-        info_style.set_color(Color::Green);
-        writeln!(
-            buf,
-            "{}: {}",
-            match record.level() {
-                Level::Info => info_style.value("I"),
-                _ => normal_style.value("?"),
-            },
-            record.args()
-        )
-    });
     info!("Discord VN scripting engine v1.0.0");
 
     let font_data = include_bytes!("../../resources/fonts/cour.ttf");
@@ -74,14 +43,24 @@ fn main() {
         },
     };
 
-    let config = Config::from_file("resources/config.conf").unwrap_or_else(|e| log!(err, e));
+    let config = Config::from_file("resources/config.conf").unwrap_or_else(|e| {
+        error!("{}", e);
+        exit(1);
+    });
     let mut rendered = 0;
     let script_path = config
         .fields
         .get("Path")
-        .unwrap_or_else(|| log!(err, "Cannot find [Path] in config file"))
+        .unwrap_or_else(|| {
+            error!("{}", "Cannot find [Path] in config file");
+            exit(1);
+        })
         .get("script_path")
-        .unwrap_or_else(|| log!(err, "script_path not set in [Path]"));
+        .unwrap_or_else(|| {
+            error!("{}", "script_path not set in [Path]");
+            exit(1);
+        });
+    debug!("Current working directory: {:?}", std::env::current_dir());
     debug!("Engine initializing, searching for {}", script_path);
     match Engine::from_file(script_path.as_str(), scene) {
         Ok(mut engine) => {
