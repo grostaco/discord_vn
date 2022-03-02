@@ -111,10 +111,18 @@ fn main() {
                                 rendered += 1;
                                 let mut buf = String::new();
                                 loop {
-                                    info!(
-                                    "A conditional jump was found, choose 1 or 2.\n[1] {}\n[2] {}",
-                                    a, b
-                                );
+                                    info!("A conditional jump was found, choose 1 or 2.",);
+                                    print!(
+                                        "+{nothing:-<width$}+\n\
+                                        | [1] {a:<xwidth$}|\n\
+                                        | [2] {b:<xwidth$}|\n\
+                                        +{nothing:-<width$}+\n\
+                                        (1 or 2) > ",
+                                        nothing = "",
+                                        width = a.len().max(b.len()) * 2,
+                                        xwidth = a.len().max(b.len()) * 2 - 5,
+                                    );
+                                    io::stdout().flush().unwrap();
                                     io::stdin().read_line(&mut buf).unwrap();
                                     match buf.trim().parse::<u64>() {
                                         Ok(num) => match num {
