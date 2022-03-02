@@ -31,7 +31,18 @@ impl Scene {
         let v_metrics = self.font.v_metrics(self.scale);
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
 
-        let white = Rgba::from_slice(&[255, 255, 255, 255]);
+        let text_color = attributes
+            .get_path(&format!("character.{}.text_color", character_name))
+            .map(|val| {
+                let c = u32::from_str_radix(val.as_value().unwrap(), 16).unwrap();
+                let a = c & 0xFF;
+                let b = (c >> 8) & 0xFF;
+                let g = (c >> 16) & 0xFF;
+                let r = (c >> 24) & 0xFF;
+                [r as u8, g as u8, b as u8, a as u8]
+            })
+            .unwrap_or([255, 255, 255, 255]);
+        let text_color = Rgba::from_slice(&text_color);
 
         let mut text_box: ImageBuffer<Rgba<u8>, Vec<u8>> =
             ImageBuffer::new(self.screen.xmax, self.text.ymax - self.text.ymin);
@@ -73,7 +84,7 @@ impl Scene {
             }
         }
         let dialogue_background = attributes
-            .get(character_name)
+            .get_path(&format!("character.{}.dialogue_color", character_name))
             .map(|val| {
                 let c = u32::from_str_radix(val.as_value().unwrap(), 16).unwrap();
                 let a = c & 0xFF;
@@ -96,7 +107,7 @@ impl Scene {
 
         draw_text(
             character_name,
-            white,
+            text_color,
             &mut image,
             &self.font,
             self.scale,
@@ -159,7 +170,7 @@ impl Scene {
 
         draw_words(
             dialogue,
-            white,
+            text_color,
             &mut image,
             &self.font,
             scale,
