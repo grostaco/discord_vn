@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fs, io};
+use std::{collections::HashMap, fs, io, process::exit};
+
+use log::error;
 
 use super::ParseError;
 
@@ -17,7 +19,10 @@ impl Config {
                 _ if e.kind() == io::ErrorKind::NotFound => {
                     ParseError::NoFileExists(path.to_owned())
                 }
-                _ => panic!("Cannot open file {} because {}", path, e),
+                _ => {
+                    error!("Cannot open file {} because {}", path, e);
+                    exit(1);
+                }
             })?
             .split('\n')
             .enumerate()
