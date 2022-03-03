@@ -59,9 +59,9 @@ impl Scene {
         for sprite in sprites {
             if let Some(sprite_path) = &sprite.sprite_path {
                 let mut sprite_img = load_image(sprite_path).expect("Unable to load sprite");
-                let (width, height) = sprite_img.dimensions();
+                let (mut width, mut height) = sprite_img.dimensions();
                 if let Some(scale) = attributes
-                    .get_path(&format!("sprite.{}.scale", character_name))
+                    .get_path(&format!("sprite.{}.scale", sprite.name))
                     .map(|f| f.as_value().unwrap().parse::<f64>())
                 {
                     trace!("{}", "Scaling character");
@@ -71,6 +71,7 @@ impl Scene {
                             (height as f64 * scale) as u32,
                             image::imageops::FilterType::Gaussian,
                         );
+                        (width, height) = sprite_img.dimensions();
                     } else {
                         warn!("{}", "scale cannot be parsed as a float. Ignoring scaling");
                     }
