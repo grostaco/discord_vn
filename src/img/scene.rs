@@ -1,3 +1,8 @@
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
+
 use image::{imageops::overlay, DynamicImage, GenericImageView, ImageBuffer, Pixel, Rgba};
 use rusttype::{point, Font, Scale};
 
@@ -20,10 +25,61 @@ pub struct Scene {
 }
 
 impl Scene {
+    pub fn dialogue_hash(
+        &self,
+        bg: Option<&DynamicImage>,
+        sprites: &Vec<&SpriteDirective>,
+        character_name: &str,
+        dialogue: &str,
+        attributes: &Attributes,
+    ) -> u64 {
+        let mut hasher = DefaultHasher::default();
+        let text_color = attributes
+            .get_path(&format!("character.{}.text_color", character_name))
+            .map(|val| {
+                let c = u32::from_str_radix(val.as_value().unwrap(), 16).unwrap();
+                let a = c & 0xFF;
+                let b = (c >> 8) & 0xFF;
+                let g = (c >> 16) & 0xFF;
+                let r = (c >> 24) & 0xFF;
+                [r as u8, g as u8, b as u8, a as u8]
+            })
+            .unwrap_or([255, 255, 255, 255]);
+        let dialogue_background = attributes
+            .get_path(&format!("character.{}.dialogue_color", character_name))
+            .map(|val| {
+                let c = u32::from_str_radix(val.as_value().unwrap(), 16).unwrap();
+                let a = c & 0xFF;
+                let b = (c >> 8) & 0xFF;
+                let g = (c >> 16) & 0xFF;
+                let r = (c >> 24) & 0xFF;
+                [r as u8, g as u8, b as u8, a as u8]
+            })
+            .unwrap_or([0, 0, 0, 255 / 2]);
+
+        if let Some(bg) = bg {
+            bg.hash(&mut hasher);
+        }
+        text_color.hash(&mut hasher);
+        dialogue_background.hash(&mut hasher);
+
+        for sprite in sprites {
+            sprite.hash(&mut hasher);
+            if let Some(Ok(scale)) = attributes
+                .get_path(&format!("sprite.{}.scale", sprite.name))
+                .map(|f| f.as_value().unwrap().parse::<f64>())
+            {
+                ((scale * 100.) as u64).hash(&mut hasher); // approximate scale as floating points have nuances making it undesirable to be hashed
+            }
+        }
+        dialogue.hash(&mut hasher);
+
+        hasher.finish()
+    }
     pub fn draw_dialogue(
         &self,
         bg: Option<&DynamicImage>,
-        sprites: Vec<&SpriteDirective>,
+        sprites: &Vec<&SpriteDirective>,
         character_name: &str,
         dialogue: &str,
         attributes: &Attributes,

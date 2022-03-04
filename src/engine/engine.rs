@@ -1,5 +1,6 @@
 use image::DynamicImage;
-use std::collections::HashMap;
+use log::debug;
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use super::{
     script::{ScriptContext, ScriptDirective},
@@ -26,8 +27,8 @@ pub struct Engine {
     sprites: HashMap<String, SpriteDirective>,
     cached_bgs: HashMap<String, DynamicImage>,
     bg_path: Option<String>,
-    /// Character attributes
     attributes: Attributes,
+    cache: Option<Vec<PathBuf>>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -162,7 +163,19 @@ impl Engine {
             cached_bgs: HashMap::new(),
             bg_path: None,
             attributes: Attributes::default(),
+            cache: None,
         })
+    }
+
+    pub fn enable_cache(&mut self) {
+        fs::create_dir_all("resources/render/.cache").unwrap();
+
+        let mut cache = Vec::new();
+        for cache_info in fs::read_dir("resources/render/.cache").unwrap() {
+            cache.push(cache_info.unwrap().path());
+        }
+
+        self.cache = Some(cache);
     }
 
     pub fn current(&self) -> Option<&ScriptContext> {
@@ -260,7 +273,7 @@ impl Engine {
                         self.bg_path
                             .as_ref()
                             .and_then(|bg_path| self.cached_bgs.get(bg_path)),
-                        self.sprites.values().collect(),
+                        &self.sprites.values().collect(),
                         &dialogue.character_name,
                         &dialogue
                             .dialogues
@@ -288,6 +301,80 @@ impl Engine {
                 },
             } {
                 image.save(path).expect("Unable to save image");
+            }
+        }
+    }
+
+    pub fn cache_render_to(&mut self, path: &str) {
+        if let Some(current) = self.current() {
+            let mut render_hash = None;
+            if let Some(image) = match current {
+                ScriptContext::Dialogue(dialogue) => {
+                    let bg = self
+                        .bg_path
+                        .as_ref()
+                        .and_then(|bg_path| self.cached_bgs.get(bg_path));
+                    let sprites = &self.sprites.values().collect();
+                    let character_name = &dialogue.character_name;
+                    let dialogue = &dialogue
+                        .dialogues
+                        .iter()
+                        .fold(String::new(), |a, b| a + " " + b);
+                    let attributes = &self.attributes;
+
+                    if let Some(cache) = &self.cache {
+                        let hash = self.scene.dialogue_hash(
+                            bg,
+                            sprites,
+                            character_name,
+                            dialogue,
+                            attributes,
+                        );
+                        render_hash = Some(hash);
+                        if let Some(cache_path) = cache.iter().find(|h| {
+                            h.file_name()
+                                .unwrap()
+                                .to_str()
+                                .unwrap()
+                                .starts_with(hash.to_string().as_str())
+                        }) {
+                            debug!("Using cached render {:?} for {}", cache_path, path);
+                            fs::copy(cache_path, path).unwrap();
+                            return;
+                        }
+                    }
+                    Some(self.scene.draw_dialogue(
+                        bg,
+                        sprites,
+                        character_name,
+                        dialogue,
+                        attributes,
+                    ))
+                }
+                ScriptContext::Directive(directive) => match directive {
+                    ScriptDirective::Jump(jump) => {
+                        if let Some((a, b)) = &jump.choices {
+                            Some(
+                                self.scene.draw_choice(
+                                    self.bg_path
+                                        .as_ref()
+                                        .and_then(|bg_path| self.cached_bgs.get(bg_path)),
+                                    &(a.as_str(), b.as_str()),
+                                ),
+                            )
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                },
+            } {
+                image.save(path).expect("Unable to save image");
+                if let Some(hash) = render_hash {
+                    image
+                        .save(&format!("resources/render/.cache/{}.png", hash))
+                        .unwrap();
+                }
             }
         }
     }

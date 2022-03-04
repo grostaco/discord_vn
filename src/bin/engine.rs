@@ -2,7 +2,7 @@ use image_rpg::{
     engine::{ScriptContext, ScriptDirective},
     Config, Engine, Scene, Size,
 };
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use rusttype::{Font, Scale};
 use std::{
     fs,
@@ -11,6 +11,9 @@ use std::{
 };
 
 fn main() {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "debug");
+    }
     env_logger::init();
 
     info!("Discord VN scripting engine v1.0.0");
@@ -68,9 +71,13 @@ fn main() {
             info!("It should be noted that if there are conditional jumps in the script, you will be prompted.");
             debug!("Removing previous render files");
             for file in fs::read_dir("resources/render").unwrap().flatten() {
-                debug!("Removing file {}", file.file_name().to_str().unwrap());
-                fs::remove_file(file.path()).unwrap();
+                if file.file_type().unwrap().is_file() {
+                    debug!("Removing file {}", file.file_name().to_str().unwrap());
+                    fs::remove_file(file.path()).unwrap();
+                }
             }
+            engine.enable_cache();
+            warn!("Cache is enabled. Unexpected rendering may occur. Remove resources/.cache to forcefully render every frame if unexpected results arise.");
             while let Some(ctx) = engine.current() {
                 let mut choice = false;
                 match ctx {
@@ -141,7 +148,7 @@ fn main() {
                         }
                     },
                 };
-                engine.render_to(&format!("resources/render/render_{}.png", rendered));
+                engine.cache_render_to(&format!("resources/render/render_{}.png", rendered));
                 if let Err(e) = engine.next(choice) {
                     error!("Cannot continue loading script: {}", e);
                 }

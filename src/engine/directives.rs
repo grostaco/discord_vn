@@ -18,7 +18,7 @@ pub struct LazilyLoadedScript {
     pub script: Option<Script>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Hash, Clone, Debug)]
 pub struct SpriteDirective {
     pub name: String,
     pub sprite_path: Option<String>,
