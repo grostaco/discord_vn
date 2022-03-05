@@ -18,7 +18,7 @@ fn main() {
 
     info!("Discord VN scripting engine v1.0.0");
 
-    let font_data = include_bytes!("../../resources/fonts/cour.ttf");
+    let font_data = include_bytes!("../../resources/fonts/Calibri Light.ttf");
     debug!("Loading font");
     let font = Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
     debug!("Font loaded");
