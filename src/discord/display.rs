@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use serenity::{
-    builder::{CreateComponents, CreateInteractionResponse},
+    builder::{CreateComponents, CreateInteractionResponse, EditInteractionResponse},
     client::{bridge::gateway::ShardMessenger, Context},
     futures::StreamExt,
     http::Http,
@@ -107,6 +107,41 @@ impl Begin {
         })
     }
 
+    fn delegate_edit_interaction_response<'a>(
+        &self,
+        interaction: &'a mut EditInteractionResponse,
+        display_link: &str,
+    ) -> &'a mut EditInteractionResponse {
+        interaction
+            .components(|components| self.delegate_component(components))
+            .create_embed(|embed| {
+                embed
+                    .title(&format!(
+                        "You are currently playing {}",
+                        self.config.fields.get("Game").unwrap().get("name").unwrap()
+                    ))
+                    .description(&match self.engine.current().unwrap() {
+                        ScriptContext::Dialogue(dialogue) => format!(
+                            "{}: {}",
+                            dialogue.character_name,
+                            dialogue.dialogues.join(" ")
+                        ),
+                        ScriptContext::Directive(directive) => {
+                            if let ScriptDirective::Jump(jump) = directive {
+                                format!(
+                                    "You are presented with two choices:\n[1] {}\n[2] {}",
+                                    jump.choices.as_ref().unwrap().0,
+                                    jump.choices.as_ref().unwrap().1
+                                )
+                            } else {
+                                panic!("Unexpected directive found during discord rendering")
+                            }
+                        }
+                    })
+                    .image(display_link)
+            })
+    }
+
     pub async fn handle_interaction(
         &mut self,
         http: &Arc<Http>,
@@ -165,6 +200,7 @@ impl Begin {
         }
 
         self.engine.render_to("resources/tmp.png");
+
         let message = temp_channel
             .send_files(http, vec!["resources/tmp.png"], |m| m)
             .await
@@ -188,6 +224,7 @@ impl Begin {
             .await_component_interactions(shard_messenger)
             .await;
 
+        //let next_image;
         while let Some(mci) = collector.next().await {
             let choice = match mci.data.custom_id.as_str() {
                 "right_page_select" => false,
@@ -225,16 +262,22 @@ impl Begin {
                 //println!("{:#?}", self.engine.current());
                 self.engine.render_to("resources/tmp.png");
 
+                mci.create_interaction_response(http, |ir| {
+                    ir.kind(InteractionResponseType::DeferredUpdateMessage)
+                })
+                .await
+                .unwrap();
+
                 let message = temp_channel
                     .send_files(http, vec!["resources/tmp.png"], |m| m)
                     .await
                     .expect("Cannot send file");
-                mci.create_interaction_response(http, |ir| {
-                    self.delegate_interaction_response(ir, &message.attachments[0].url)
-                        .kind(InteractionResponseType::UpdateMessage)
+                mci.edit_original_interaction_response(http, |ir| {
+                    self.delegate_edit_interaction_response(ir, &message.attachments[0].url)
                 })
                 .await
                 .expect("Cannot update interaction");
+
                 if let Some(play_info) = play_info.take() {
                     play_url(context, play_info.0, play_info.1, &play_info.2)
                         .await
