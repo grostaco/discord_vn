@@ -28,7 +28,7 @@ impl Scene {
     pub fn dialogue_hash(
         &self,
         bg: Option<&DynamicImage>,
-        sprites: &Vec<&SpriteDirective>,
+        sprites: &Vec<SpriteDirective>,
         character_name: &str,
         dialogue: &str,
         attributes: &Attributes,
@@ -64,13 +64,18 @@ impl Scene {
         dialogue_background.hash(&mut hasher);
 
         for sprite in sprites {
-            sprite.hash(&mut hasher);
             if let Some(Ok(scale)) = attributes
                 .get_path(&format!("sprite.{}.scale", sprite.name))
                 .map(|f| f.as_value().unwrap().parse::<f64>())
             {
                 ((scale * 100.) as u64).hash(&mut hasher); // approximate scale as floating points have nuances making it undesirable to be hashed
             }
+            // if let Some(priority) = attributes
+            //     .get_path(&format!("sprite.{}.priority", sprite.name))
+            //     .map(|v| v.as_value().unwrap())
+            // {
+            //     priority.hash(&mut hasher);
+            // }
         }
         dialogue.hash(&mut hasher);
 
@@ -79,7 +84,7 @@ impl Scene {
     pub fn draw_dialogue(
         &self,
         bg: Option<&DynamicImage>,
-        sprites: &Vec<&SpriteDirective>,
+        sprites: &[SpriteDirective],
         character_name: &str,
         dialogue: &str,
         attributes: &Attributes,
@@ -112,7 +117,7 @@ impl Scene {
             overlay(&mut image, &resized_bg, 0, 0);
         }
 
-        for sprite in sprites {
+        for sprite in sprites.iter().filter(|s| s.show) {
             if let Some(sprite_path) = &sprite.sprite_path {
                 let mut sprite_img = load_image(sprite_path).expect("Unable to load sprite");
                 let (mut width, mut height) = sprite_img.dimensions();

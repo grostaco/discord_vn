@@ -1,6 +1,6 @@
 use image::DynamicImage;
 use log::debug;
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, fs, mem::swap, path::PathBuf};
 
 use super::{
     script::{ScriptContext, ScriptDirective},
@@ -24,7 +24,7 @@ pub struct Engine {
     pub script: Script,
     pub iscript: usize,
     scene: Scene,
-    sprites: HashMap<String, SpriteDirective>,
+    sprites: Vec<SpriteDirective>,
     cached_bgs: HashMap<String, DynamicImage>,
     bg_path: Option<String>,
     attributes: Attributes,
@@ -159,7 +159,7 @@ impl Engine {
             script: Script::from_file(script_path)?,
             iscript: 0,
             scene,
-            sprites: HashMap::new(),
+            sprites: Vec::new(),
             cached_bgs: HashMap::new(),
             bg_path: None,
             attributes: Attributes::default(),
@@ -201,10 +201,25 @@ impl Engine {
                         }
                     },
                     ScriptDirective::Sprite(sprite) => {
-                        if !sprite.show {
-                            self.sprites.remove(&sprite.name);
+                        if let Some(d) = self.sprites.iter_mut().position(|s| s.name == sprite.name)
+                        {
+                            swap(&mut self.sprites[d], sprite);
                         } else {
-                            self.sprites.insert(sprite.name.to_owned(), sprite.clone());
+                            let priority = |name: &str| {
+                                self.attributes
+                                    .get_path(&format!("sprite.{}.priority", name))
+                                    .and_then(|v| v.as_value().map(|i| i.parse::<i32>().unwrap()))
+                                    .unwrap_or(0)
+                            };
+                            if let Some(index) = self
+                                .sprites
+                                .iter()
+                                .position(|x| priority(&x.name) >= priority(&sprite.name))
+                            {
+                                self.sprites.insert(index, sprite.clone());
+                            } else {
+                                self.sprites.push(sprite.clone());
+                            }
                         }
                         self.iscript += 1;
                     }
@@ -273,7 +288,7 @@ impl Engine {
                         self.bg_path
                             .as_ref()
                             .and_then(|bg_path| self.cached_bgs.get(bg_path)),
-                        &self.sprites.values().collect(),
+                        &self.sprites,
                         &dialogue.character_name,
                         &dialogue
                             .dialogues
@@ -314,7 +329,7 @@ impl Engine {
                         .bg_path
                         .as_ref()
                         .and_then(|bg_path| self.cached_bgs.get(bg_path));
-                    let sprites = &self.sprites.values().collect();
+                    let sprites = &self.sprites;
                     let character_name = &dialogue.character_name;
                     let dialogue = &dialogue
                         .dialogues
