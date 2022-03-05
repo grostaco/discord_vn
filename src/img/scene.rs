@@ -28,7 +28,7 @@ impl Scene {
     pub fn dialogue_hash(
         &self,
         bg: Option<&DynamicImage>,
-        sprites: &Vec<SpriteDirective>,
+        sprites: &[SpriteDirective],
         character_name: &str,
         dialogue: &str,
         attributes: &Attributes,
@@ -63,13 +63,15 @@ impl Scene {
         text_color.hash(&mut hasher);
         dialogue_background.hash(&mut hasher);
 
-        for sprite in sprites {
+        for sprite in sprites.iter().filter(|s| s.show) {
+            sprite.hash(&mut hasher);
             if let Some(Ok(scale)) = attributes
                 .get_path(&format!("sprite.{}.scale", sprite.name))
                 .map(|f| f.as_value().unwrap().parse::<f64>())
             {
                 ((scale * 100.) as u64).hash(&mut hasher); // approximate scale as floating points have nuances making it undesirable to be hashed
             }
+            // Priorities doesn't matter if sprites are loaded in the same order
             // if let Some(priority) = attributes
             //     .get_path(&format!("sprite.{}.priority", sprite.name))
             //     .map(|v| v.as_value().unwrap())

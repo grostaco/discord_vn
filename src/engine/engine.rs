@@ -211,10 +211,17 @@ impl Engine {
                                     .and_then(|v| v.as_value().map(|i| i.parse::<i32>().unwrap()))
                                     .unwrap_or(0)
                             };
+                            // println!(
+                            //     "{:#?} {:#?} {:#?}",
+                            //     sprite,
+                            //     self.attributes,
+                            //     self.attributes
+                            //         .get_path(&format!("sprite.{}.priority", sprite.name))
+                            // );
                             if let Some(index) = self
                                 .sprites
                                 .iter()
-                                .position(|x| priority(&x.name) >= priority(&sprite.name))
+                                .position(|x| priority(&x.name) <= priority(&sprite.name))
                             {
                                 self.sprites.insert(index, sprite.clone());
                             } else {
@@ -233,6 +240,15 @@ impl Engine {
                     }
                     ScriptDirective::Attr(attr) => {
                         self.attributes.add_attribute(attr);
+                        if attr.path.starts_with("sprite") && attr.key == "priority" {
+                            let priority = |name: &str| {
+                                self.attributes
+                                    .get_path(&format!("sprite.{}.priority", name))
+                                    .and_then(|v| v.as_value().map(|i| i.parse::<i32>().unwrap()))
+                                    .unwrap_or(0)
+                            };
+                            self.sprites.sort_by_key(|s| priority(&s.name));
+                        }
                         self.iscript += 1;
                     }
                     ScriptDirective::Custom(_) => {
