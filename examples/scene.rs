@@ -30,7 +30,7 @@ fn main() {
 
     let image = s.draw_dialogue(
         Some(&load_image("resources/bgs/bg1.png").unwrap()),
-        &vec![&SpriteDirective {
+        &[SpriteDirective {
             name: "x".to_owned(),
             sprite: None,
             sprite_path: Some("resources/sprites/Mon1.png".to_owned()),
