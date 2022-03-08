@@ -151,13 +151,14 @@ fn main() {
                 engine.cache_render_to(&format!("resources/render/render_{}.png", rendered));
                 if let Err(e) = engine.next(choice) {
                     error!("Cannot continue loading script: {}", e);
+                    exit(1);
                 }
             }
         }
         Err(e) => {
             error!("{}", e);
             error!("Cannot initialize script.txt. Aborting.");
-            exit(0);
+            exit(1);
         }
     }
 }
