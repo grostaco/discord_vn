@@ -139,11 +139,23 @@ impl Scene {
                         warn!("{}", "scale cannot be parsed as a float. Ignoring scaling");
                     }
                 }
+                let (x, y) = (sprite.x.unwrap() as i32, sprite.y.unwrap() as i32);
+                let left = (width as i32 / 2 - x).max(self.screen.xmin as i32);
+                let top = (height as i32 / 2 - y).max(self.screen.ymin as i32);
+
+                let mut effective_x = sprite.x.unwrap() as i32 - width as i32 / 2;
+                let mut effective_y = sprite.y.unwrap() as i32 - height as i32 / 2;
+                if left > 0 || top > 0 {
+                    sprite_img = sprite_img.crop_imm(left as u32, top as u32, width, height);
+                    effective_x += left;
+                    effective_y += top;
+                }
+
                 overlay(
                     &mut image,
                     &sprite_img,
-                    (sprite.x.unwrap() - width / 2).clamp(self.screen.xmin, self.screen.xmax),
-                    (sprite.y.unwrap() - height / 2).clamp(self.screen.xmin, self.screen.xmax),
+                    effective_x as u32,
+                    effective_y as u32,
                 );
             }
         }
