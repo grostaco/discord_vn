@@ -5,7 +5,7 @@ use nannou::{
     color::Rgb,
     event::{Update, WindowEvent},
     geom::Rect,
-    prelude::{pt2, Point2, Vec3},
+    prelude::{pt2, Point2},
     wgpu::Texture,
     App, Frame, LoopMode,
 };
@@ -28,11 +28,8 @@ struct Model {
 struct Sprite {
     name: String,
     original_image: DynamicImage,
-    current_image: Option<DynamicImage>,
-    texture: Option<Texture>,
     scale: f32,
     position: Point2,
-    last_position: Point2,
 }
 
 widget_ids! {
@@ -46,19 +43,13 @@ widget_ids! {
 }
 
 impl Sprite {
-    fn new(app: &App, name: &str, image: DynamicImage, position: Point2) -> Self {
-        let texture = Texture::from_image(app, &image);
-        let mut sprite = Self {
+    fn new(name: &str, image: DynamicImage, position: Point2) -> Self {
+        Self {
             name: name.to_string(),
             original_image: image,
-            current_image: None,
             scale: 1.,
-            texture: Some(texture),
             position,
-            last_position: Point2::new(1., 1.),
-        };
-        //sprite.set_position(app, pt2(0., 0.), [0., 640., 0., 480.]);
-        sprite
+        }
     }
 
     fn get_scaled(&self) -> (f32, f32) {
@@ -68,67 +59,15 @@ impl Sprite {
 
     fn get_image(&self) -> &DynamicImage {
         &self.original_image
-        // self.current_image.as_ref().unwrap_or(&self.original_image)
     }
 
     fn get_texture(&self, app: &App) -> Option<Texture> {
         Some(Texture::from_image(app, self.get_image()))
     }
 
-    // fn get_position(&self, bounding: [f32; 4]) -> Point2 {
-    //     let [width, height] = self.get_texture().unwrap().size();
-    //     let [left, right, top, bottom] = bounding;
-    //     pt2(
-    //         self.position.x.clamp(left, right),
-    //         self.position.y.clamp(top, bottom),
-    //     )
-    // }
-
-    // fn bound(&mut self, app: &App, bounding: [f32; 4]) {
-    //     let (width, height) = self.get_scaled();
-    //     let (x, y) = (self.position.x, self.position.y);
-    //     let [left, right, top, bottom] = bounding;
-
-    //     let left = (width / 2. - x).max(0.) as u32;
-    //     let right = (width / 2. + x).min(right) as u32;
-    //     let top = (y - height / 2.).max(top) as u32;
-    //     let bottom = (y + height / 2.).min(bottom) as u32;
-    //     println!("{} {} {} {}", left, right, top, bottom);
-
-    //     let image = self
-    //         .original_image
-    //         .resize(
-    //             width as u32,
-    //             height as u32,
-    //             image::imageops::FilterType::Triangle,
-    //         )
-    //         .crop_imm(left as u32, 0, width as u32, height as u32);
-    //     self.current_image = Some(image);
-    // }
-
     fn set_position(&mut self, xy: Point2) {
         self.position = xy;
     }
-
-    // fn get_image(&self) -> &DynamicImage {
-    //     self.scaled_image.as_ref().unwrap_or(&self.original_image)
-    // }
-
-    // fn scale(&mut self, scale: f32) {
-    //     self.scale = scale;
-    //     if (1. - scale).abs() < f32::EPSILON {
-    //         self.scaled_image = None;
-    //         return;
-    //     }
-
-    //     let (width, height) = self.original_image.dimensions();
-    //     self.scaled_image = Some(image::DynamicImage::ImageRgba8(resize(
-    //         &self.original_image,
-    //         (width as f32 * scale) as u32,
-    //         (height as f32 * scale) as u32,
-    //         image::imageops::FilterType::Gaussian,
-    //     )));
-    // }
 }
 
 fn model(app: &App) -> Model {
@@ -153,12 +92,11 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn event(app: &App, model: &mut Model, event: WindowEvent) {
+fn event(_app: &App, model: &mut Model, event: WindowEvent) {
     if let WindowEvent::DroppedFile(path) = event {
         let buffer = std::fs::read(&path).unwrap();
         let image = image::load_from_memory(&buffer).unwrap();
         model.sprites.borrow_mut().push(Sprite::new(
-            app,
             path.file_stem().unwrap().to_str().unwrap(),
             image,
             pt2(0., 0.),
@@ -175,13 +113,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     for sprite in model.sprites.borrow_mut().iter_mut() {
         if let Some(texture) = sprite.get_texture(app) {
-            // let orig = &sprite.original_image.dimensions();
-            // let cur = sprite.get_image().dimensions();
-            // let xy = sprite.position + pt2((orig.0 - cur.0) as f32 / 2., 0.) + pt2(140., 100.)
-            //     - pt2(320., 240.);
-            let [width, height] = texture.size();
-
-            println!("{:#?}", sprite.position);
+            let (width, height) = sprite.get_scaled();
             draw.scissor(Rect::from_x_y_w_h(140., -100., 640., 480.))
                 .texture(&texture)
                 .w_h(width as f32 * sprite.scale, height as f32 * sprite.scale)
