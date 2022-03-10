@@ -175,24 +175,22 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     for sprite in model.sprites.borrow_mut().iter_mut() {
         if let Some(texture) = sprite.get_texture(app) {
-            let orig = &sprite.original_image.dimensions();
-            let cur = sprite.get_image().dimensions();
+            // let orig = &sprite.original_image.dimensions();
+            // let cur = sprite.get_image().dimensions();
             // let xy = sprite.position + pt2((orig.0 - cur.0) as f32 / 2., 0.) + pt2(140., 100.)
             //     - pt2(320., 240.);
             let [width, height] = texture.size();
 
             println!("{:#?}", sprite.position);
-            draw.scale(sprite.scale)
-                .translate(Vec3::new(-(width as f32 / 2.), 0., 0.))
-                .scissor(Rect::from_x_y_w_h(140., -100., 640., 480.))
+            draw.scissor(Rect::from_x_y_w_h(140., -100., 640., 480.))
                 .texture(&texture)
-                .w_h(width as f32, height as f32)
-                .x_y(sprite.position.x, sprite.position.y);
-            // draw.ellipse()
-            //     .resolution(16.)
-            //     .radius(4.)
-            //     .color(Rgb::from_components((0.3, 0.3, 0.3)))
-            //     .xy(sprite.position);
+                .w_h(width as f32 * sprite.scale, height as f32 * sprite.scale)
+                .xy(sprite.position + pt2(140., 100.) - pt2(320., 240.));
+            draw.ellipse()
+                .resolution(16.)
+                .radius(4.)
+                .color(Rgb::from_components((1., 0.3, 0.3)))
+                .xy(sprite.position + pt2(140., 100.) - pt2(320., 240.));
         }
     }
     draw.to_frame(app, &frame).unwrap();
@@ -203,7 +201,7 @@ fn raw_window_event(app: &App, model: &mut Model, event: &RawWindowEvent) {
     model.ui.handle_raw_event(app, event);
 }
 
-fn update(app: &App, model: &mut Model, _update: Update) {
+fn update(_app: &App, model: &mut Model, _update: Update) {
     let ui = &mut model.ui.set_widgets();
 
     fn slider(val: f32, min: f32, max: f32) -> widget::Slider<'static, f32> {
