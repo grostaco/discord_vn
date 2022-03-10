@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use image::{DynamicImage, GenericImageView};
 use nannou::{
     color::Rgb,
@@ -22,7 +20,7 @@ struct Model {
     ui: Ui,
     ids: Ids,
     index: usize,
-    sprites: RefCell<Vec<Sprite>>,
+    sprites: Vec<Sprite>,
 }
 
 struct Sprite {
@@ -88,7 +86,7 @@ fn model(app: &App) -> Model {
         ui,
         ids,
         index: 0,
-        sprites: RefCell::new(Vec::new()),
+        sprites: Vec::new(),
     }
 }
 
@@ -96,7 +94,7 @@ fn event(_app: &App, model: &mut Model, event: WindowEvent) {
     if let WindowEvent::DroppedFile(path) = event {
         let buffer = std::fs::read(&path).unwrap();
         let image = image::load_from_memory(&buffer).unwrap();
-        model.sprites.borrow_mut().push(Sprite::new(
+        model.sprites.push(Sprite::new(
             path.file_stem().unwrap().to_str().unwrap(),
             image,
             pt2(0., 0.),
@@ -111,7 +109,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     draw.rect().x(140.).y(100.).w_h(640., 480.).rgb(1., 1., 1.);
 
-    for sprite in model.sprites.borrow_mut().iter_mut() {
+    for sprite in &model.sprites {
         if let Some(texture) = sprite.get_texture(app) {
             let (width, height) = sprite.get_scaled();
             draw.scissor(Rect::from_x_y_w_h(140., -100., 640., 480.))
@@ -145,7 +143,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
             .border(0.0)
     }
 
-    if let Some(sprite) = model.sprites.get_mut().get_mut(model.index) {
+    if let Some(sprite) = model.sprites.get_mut(model.index) {
         if let Some(value) = slider(sprite.scale, 0., 2.)
             .top_left_with_margin(20.)
             .label(&format!("Scale {:.2}", sprite.scale))
@@ -164,17 +162,11 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
                 .border(0.)
                 .set(model.ids.position, ui)
         {
-            //sprite.position = pt2(x, y);
             sprite.set_position(Point2::new(x.round(), y.round()));
         }
 
         if let Some(index) = widget::DropDownList::new(
-            &model
-                .sprites
-                .borrow()
-                .iter()
-                .map(|s| &s.name)
-                .collect::<Vec<_>>(),
+            &model.sprites.iter().map(|s| &s.name).collect::<Vec<_>>(),
             Some(model.index),
         )
         .down(10.)
