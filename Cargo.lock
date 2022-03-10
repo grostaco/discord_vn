@@ -1310,7 +1310,6 @@ dependencies = [
  "log",
  "nannou",
  "nannou_conrod",
- "native-windows-gui",
  "rusttype 0.9.2",
  "serenity",
  "songbird",
@@ -1447,12 +1446,6 @@ dependencies = [
  "cfg-if 1.0.0",
  "winapi",
 ]
-
-[[package]]
-name = "libm"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fc7aa29613bd6a620df431842069224d8bc9011086b1db4c0e0cd47fa03ec9a"
 
 [[package]]
 name = "line_drawing"
@@ -1804,21 +1797,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "729eb334247daa1803e0a094d0a5c55711b85571179f5ec6e53eccfdf7008958"
 dependencies = [
  "getrandom 0.2.4",
-]
-
-[[package]]
-name = "native-windows-gui"
-version = "1.0.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1e049bccae62e28782c5eff82e0c8a4dace50b9783fe03b95447fef3172bb89"
-dependencies = [
- "bitflags",
- "lazy_static",
- "plotters",
- "plotters-backend",
- "stretch",
- "winapi",
- "winapi-build",
 ]
 
 [[package]]
@@ -2267,24 +2245,6 @@ name = "pkg-config"
 version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
-
-[[package]]
-name = "plotters"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32a3fd9ec30b9749ce28cd91f255d569591cdf937fe280c312143e3c4bad6f2a"
-dependencies = [
- "num-traits 0.2.14",
- "plotters-backend",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
-name = "plotters-backend"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d88417318da0eaf0fdcdb51a0ee6c3bed624333bff8f946733049380be67ac1c"
 
 [[package]]
 name = "pnet_base"
@@ -3080,16 +3040,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "stretch"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b0dc6d20ce137f302edf90f9cd3d278866fd7fb139efca6f246161222ad6d87"
-dependencies = [
- "lazy_static",
- "libm",
-]
-
-[[package]]
 name = "strsim"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3858,12 +3808,6 @@ dependencies = [
  "winapi-i686-pc-windows-gnu",
  "winapi-x86_64-pc-windows-gnu",
 ]
-
-[[package]]
-name = "winapi-build"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
 
 [[package]]
 name = "winapi-i686-pc-windows-gnu"
