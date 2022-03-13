@@ -42,7 +42,7 @@ fn main() {
             xmin: 20,
             xmax: 620,
             ymin: 340,
-            ymax: 480,
+            ymax: 470,
         },
     };
 

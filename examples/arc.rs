@@ -77,29 +77,93 @@ fn draw_line_segment(image: &mut DynamicImage, start: (f32, f32), end: (f32, f32
     for point in line_iterator {
         let (x, y) = point;
         if x >= 0 && x < width as i32 && y >= 0 && y <= height as i32 {
-            image.put_pixel(x as u32, y as u32, [255, 255, 255, 255].into())
+            image.put_pixel(x as u32, y as u32, [0, 0, 0, 255 / 2].into())
         }
     }
 }
 
+const WHITE: [u8; 4] = [255, 255, 255, 255 / 2];
+const WIDTH: f32 = 530.;
+const HEIGHT: f32 = 80.;
 fn main() {
     let mut img = DynamicImage::new_rgba8(640, 480);
 
     let mut x = 0i32;
-    let mut y = 30;
+    let mut y = 40;
     let mut p = 1 - y;
 
-    let xc = 50;
-    let yc = 50;
+    let xc = WIDTH as i32 + y + 10;
+    let yc = 430i32;
 
     while x <= y {
+        // draw_line_segment(
+        //     &mut img,
+        //     (xc as f32, (yc + y) as f32),
+        //     ((x + xc) as f32, (y + yc) as f32),
+        // );
+
         draw_line_segment(
             &mut img,
-            (xc as f32, (yc + y) as f32),
             ((x + xc) as f32, (y + yc) as f32),
+            ((xc - x) as f32 - WIDTH, (y + yc) as f32),
         );
-        //img.put_pixel(x as u32 + xc, y as u32 + yc, [255, 255, 255, 255].into());
-        //img.put_pixel(y as u32 + xc, x as u32 + xc, [255, 255, 255, 255].into());
+
+        draw_line_segment(
+            &mut img,
+            ((xc + y) as f32, (yc + x) as f32),
+            ((xc - y) as f32 - WIDTH, (x + yc) as f32),
+        );
+
+        // draw_line_segment(
+        //     &mut img,
+        //     ((y + yc) as f32, (x + xc) as f32),
+        //     ((yc + y) as f32 - WIDTH, (xc - x) as f32),
+        // );
+
+        draw_line_segment(
+            &mut img,
+            ((x + xc) as f32, (yc - y) as f32 - HEIGHT),
+            ((xc - x) as f32 - WIDTH, (yc - y) as f32 - HEIGHT),
+        );
+
+        draw_line_segment(
+            &mut img,
+            ((xc + y) as f32, (yc - x) as f32 - HEIGHT),
+            ((xc - y) as f32 - WIDTH, (yc - x) as f32 - HEIGHT),
+        );
+
+        // draw_line_segment(
+        //     &mut img,
+        //     ((x - xc) as f32, (yc - y) as f32 - HEIGHT),
+        //     ((xc + x) as f32 - WIDTH, (yc - y) as f32 - HEIGHT),
+        // );
+
+        // img.put_pixel((xc + x) as u32, (yc + y) as u32, WHITE.into());
+        img.put_pixel((xc + y) as u32, (yc + x) as u32, WHITE.into());
+        img.put_pixel(
+            (xc - y - WIDTH as i32) as u32,
+            (yc + x) as u32,
+            WHITE.into(),
+        );
+
+        // img.put_pixel(y as u32 + yc, x as u32 + xc as u32, WHITE.into());
+        // img.put_pixel(y as u32 + yc as u32, x as u32 + xc as u32, WHITE.into());
+
+        // img.put_pixel(y as u32 + yc as u32, xc as u32 - x as u32, WHITE.into());
+
+        // img.put_pixel(
+        //     xc as u32 - x as u32 - 200,
+        //     y as u32 + yc as u32,
+        //     WHITE.into(),
+        // );
+        // img.put_pixel(
+        //     yc as u32 - y as u32 - 200,
+        //     x as u32 + xc as u32,
+        //     WHITE.into(),
+        // );
+
+        // img.put_pixel(x as u32 + xc as u32, yc - y as u32, WHITE.into());
+        // img.put_pixel(xc as u32 - x as u32, yc - y as u32, WHITE.into());
 
         if p < 0 {
             p += 2 * x + 1;
@@ -108,6 +172,14 @@ fn main() {
             p += 2 * (x - y) + 1;
         }
         x += 1;
+    }
+
+    for y in 0..(HEIGHT as u32) {
+        draw_line_segment(
+            &mut img,
+            (0., 460. - HEIGHT / 2. - y as f32),
+            (10. + WIDTH, 460. - HEIGHT / 2. - y as f32),
+        );
     }
 
     img.save("out.png").unwrap();

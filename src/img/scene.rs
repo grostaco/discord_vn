@@ -10,7 +10,7 @@ use crate::engine::{engine::Attributes, SpriteDirective};
 use log::{trace, warn};
 
 use super::{
-    draw::{as_glyphs, draw_words, glyphs_width, load_image},
+    draw::{as_glyphs, draw_rounded_rect, draw_words, glyphs_width, load_image},
     draw_text,
     size::Size,
 };
@@ -170,51 +170,74 @@ impl Scene {
                 [r as u8, g as u8, b as u8, a as u8]
             })
             .unwrap_or([0, 0, 0, 255 / 2]);
-        for pixel in text_box.pixels_mut() {
-            pixel.0 = dialogue_background;
+
+        draw_rounded_rect(
+            &mut text_box,
+            (0, 0),
+            (
+                self.text.xmax - self.text.xmin,
+                self.text.ymax - self.text.ymin,
+            ),
+            dialogue_background.into(),
+            8,
+        );
+
+        overlay(&mut image, &text_box, self.text.xmin, self.text.ymin);
+
+        if !character_name.is_empty() {
+            let name_width = glyphs_width(&as_glyphs(
+                character_name,
+                &self.font,
+                self.scale,
+                point(0., 0.),
+            ));
+
+            let height = v_metrics.ascent - v_metrics.descent;
+
+            let mut character_box: ImageBuffer<Rgba<u8>, Vec<u8>> =
+                ImageBuffer::new(name_width + 21, height as u32 + 20);
+
+            draw_rounded_rect(
+                &mut character_box,
+                (0, 0),
+                (name_width + 20, height as u32 + 20),
+                [0, 0, 0, 255 / 2].into(),
+                8,
+            );
+
+            draw_text(
+                character_name,
+                text_color,
+                &mut character_box,
+                &self.font,
+                self.scale,
+                point(10., height + 5.),
+            );
+
+            overlay(
+                &mut image,
+                &character_box,
+                self.text.xmin,
+                self.text.ymin - 50,
+            );
         }
 
-        overlay(
-            &mut image,
-            &text_box,
-            0,
-            self.text.ymin - (v_metrics.ascent) as u32,
-        );
-
-        draw_text(
-            character_name,
-            text_color,
-            &mut image,
-            &self.font,
-            self.scale,
-            point(
-                self.text.xmin as f32,
-                self.text.ymin as f32 + v_metrics.ascent,
-            ),
-        );
-
-        let name_height = {
-            let v = self.font.v_metrics(self.scale);
-            v.ascent - v.descent
-        };
+        // let name_height = {
+        //     let v = self.font.v_metrics(self.scale);
+        //     v.ascent - v.descent
+        // };
 
         let mut scale = self.scale;
-        let vertical_pad = (v_metrics.ascent * {
-            if character_name.is_empty() {
-                1.0
-            } else {
-                3.0
-            }
-        })
-        .ceil() as u32;
+        let vertical_pad = v_metrics.ascent as u32;
 
         let ycur = self.text.ymin;
         let mut v_metrics;
         let mut glyphs_height;
+        let mut whitespace_width;
         loop {
             v_metrics = self.font.v_metrics(scale);
             glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
-            let whitespace_width = glyphs_width(
+            whitespace_width = glyphs_width(
                 &self
                     .font
                     .layout("_", scale, point(0., 0.))
@@ -222,15 +245,15 @@ impl Scene {
             );
             let (y, _) = dialogue
                 .split(' ')
-                .map(|word| as_glyphs(word, &self.font, scale, point(0., 0.)))
+                .map(|word| as_glyphs(word, &self.font, scale, point(self.text.xmin as f32, 0.)))
                 .fold(
                     (ycur, self.text.xmin + whitespace_width),
                     |(mut ycur, mut xcur), glyphs| {
                         if !glyphs.is_empty() {
                             let width = glyphs_width(&glyphs);
-                            if xcur + width + whitespace_width > self.text.xmax {
+                            if xcur + width + whitespace_width > self.text.xmax - self.text.xmin {
                                 ycur += glyphs_height;
-                                xcur = 0;
+                                xcur = self.text.xmin;
                             }
                             xcur += width + whitespace_width;
                         }
@@ -251,16 +274,10 @@ impl Scene {
             &self.font,
             scale,
             point(
-                self.text.xmin as f32,
-                self.text.ymin as f32 + {
-                    if character_name.is_empty() {
-                        glyphs_height as f32
-                    } else {
-                        name_height + glyphs_height as f32
-                    }
-                },
+                whitespace_width as f32 + self.text.xmin as f32,
+                vertical_pad as f32 / 2. + self.text.ymin as f32 + glyphs_height as f32,
             ),
-            self.text.xmax,
+            self.text.xmax - self.text.xmin - whitespace_width,
         );
 
         image
