@@ -1,9 +1,6 @@
-use image::{DynamicImage, GenericImage, Rgba};
+use image::DynamicImage;
 use imageproc::{
-    drawing::{
-        draw_filled_ellipse_mut, draw_filled_rect_mut, draw_line_segment, draw_line_segment_mut,
-        Canvas,
-    },
+    drawing::{draw_filled_rect_mut, draw_line_segment_mut, Canvas},
     rect::Rect,
 };
 

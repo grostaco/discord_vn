@@ -4,6 +4,7 @@ use std::{
 };
 
 use image::{imageops::overlay, DynamicImage, GenericImageView, ImageBuffer, Pixel, Rgba};
+use imageproc::drawing::draw_filled_circle_mut;
 use rusttype::{point, Font, Scale};
 
 use crate::engine::{engine::Attributes, SpriteDirective};
@@ -92,6 +93,7 @@ impl Scene {
         attributes: &Attributes,
     ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         let v_metrics = self.font.v_metrics(self.scale);
+        let height = v_metrics.ascent - v_metrics.descent;
         let mut image = DynamicImage::new_rgba8(self.screen.xmax, self.screen.ymax).to_rgba8();
 
         let text_color = attributes
@@ -107,14 +109,16 @@ impl Scene {
             .unwrap_or([255, 255, 255, 255]);
         let text_color = Rgba::from_slice(&text_color);
 
-        let mut text_box: ImageBuffer<Rgba<u8>, Vec<u8>> =
-            ImageBuffer::new(self.screen.xmax, self.text.ymax - self.text.ymin);
+        let mut text_box: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(
+            self.screen.xmax,
+            self.text.ymax - self.text.ymin + height as u32 + 20,
+        );
 
         if let Some(bg) = bg {
             let resized_bg = bg.resize_exact(
                 self.screen.xmax - self.screen.xmin,
                 self.screen.ymax - self.screen.ymin,
-                image::imageops::FilterType::Gaussian,
+                image::imageops::FilterType::Nearest,
             );
             overlay(&mut image, &resized_bg, 0, 0);
         }
@@ -173,16 +177,14 @@ impl Scene {
 
         draw_rounded_rect(
             &mut text_box,
-            (0, 0),
+            (0, height as u32 + 20),
             (
                 self.text.xmax - self.text.xmin,
-                self.text.ymax - self.text.ymin,
+                self.text.ymax - self.text.ymin + height as u32 + 20,
             ),
             dialogue_background.into(),
             8,
         );
-
-        overlay(&mut image, &text_box, self.text.xmin, self.text.ymin);
 
         if !character_name.is_empty() {
             let name_width = glyphs_width(&as_glyphs(
@@ -194,33 +196,43 @@ impl Scene {
 
             let height = v_metrics.ascent - v_metrics.descent;
 
-            let mut character_box: ImageBuffer<Rgba<u8>, Vec<u8>> =
-                ImageBuffer::new(name_width + 21, height as u32 + 20);
-
             draw_rounded_rect(
-                &mut character_box,
+                &mut text_box,
                 (0, 0),
-                (name_width + 20, height as u32 + 20),
-                [0, 0, 0, 255 / 2].into(),
+                (name_width, height as u32 + 30),
+                dialogue_background.into(),
                 8,
+            );
+
+            draw_filled_circle_mut(
+                &mut text_box,
+                (name_width as i32, height as i32 + 20),
+                height as i32 + 20,
+                dialogue_background.into(),
             );
 
             draw_text(
                 character_name,
                 text_color,
-                &mut character_box,
+                &mut text_box,
                 &self.font,
                 self.scale,
-                point(10., height + 5.),
+                point(15., height + 5.),
             );
 
-            overlay(
-                &mut image,
-                &character_box,
-                self.text.xmin,
-                self.text.ymin - 50,
-            );
+            // overlay(
+            //     &mut image,
+            //     &character_box,
+            //     self.text.xmin,
+            //     self.text.ymin - height as u32 - 18,
+            // );
         }
+        overlay(
+            &mut image,
+            &text_box,
+            self.text.xmin,
+            self.text.ymin - height as u32 - 20,
+        );
 
         // let name_height = {
         //     let v = self.font.v_metrics(self.scale);
@@ -275,7 +287,7 @@ impl Scene {
             scale,
             point(
                 whitespace_width as f32 + self.text.xmin as f32,
-                vertical_pad as f32 / 2. + self.text.ymin as f32 + glyphs_height as f32,
+                whitespace_width as f32 + self.text.ymin as f32 + glyphs_height as f32,
             ),
             self.text.xmax - self.text.xmin - whitespace_width,
         );
