@@ -66,6 +66,7 @@ Meta direcitves are powerful commands to control the environment of the script. 
 | sprite | text,hide | Hide the sprite with the first argument's name |
 | custom | directive(args) | Pass a custom directive to any frontend programs using the engine. Ignored by the engine. This serves as a complementary comment
 | custom(play) | snowflake, snowflake, text | If ran on a discord engine, play a song from the third argument's url in the first argument's guild and second argument's voice channel. This is an unstable feature and highly subject to change in upcoming versions. |
+
 The screen size is set at exactly 640x480, images and sprite positioning should match this.
 
 ## Examples
