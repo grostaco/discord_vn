@@ -21,7 +21,7 @@ use crate::{
 
 use super::voice::play_url;
 
-struct PlayInfo(u64, u64, String);
+struct PlayInfo(u64, u64, String, f32);
 pub struct Begin {
     config: Config,
     engine: Engine,
@@ -85,11 +85,17 @@ impl Begin {
                             self.config.fields.get("Game").unwrap().get("name").unwrap()
                         ))
                         .description(&match self.engine.current().unwrap() {
-                            ScriptContext::Dialogue(dialogue) => format!(
-                                "{}: {}",
-                                dialogue.character_name,
-                                dialogue.dialogues.join(" ")
-                            ),
+                            ScriptContext::Dialogue(dialogue) => {
+                                if dialogue.character_name.trim().is_empty() {
+                                    dialogue.dialogues.join(" ")
+                                } else {
+                                    format!(
+                                        "{}: {}",
+                                        dialogue.character_name,
+                                        dialogue.dialogues.join(" ")
+                                    )
+                                }
+                            }
                             ScriptContext::Directive(directive) => {
                                 if let ScriptDirective::Jump(jump) = directive {
                                     format!(
@@ -121,11 +127,17 @@ impl Begin {
                         self.config.fields.get("Game").unwrap().get("name").unwrap()
                     ))
                     .description(&match self.engine.current().unwrap() {
-                        ScriptContext::Dialogue(dialogue) => format!(
-                            "{}: {}",
-                            dialogue.character_name,
-                            dialogue.dialogues.join(" ")
-                        ),
+                        ScriptContext::Dialogue(dialogue) => {
+                            if dialogue.character_name.trim().is_empty() {
+                                dialogue.dialogues.join(" ")
+                            } else {
+                                format!(
+                                    "{}: {}",
+                                    dialogue.character_name,
+                                    dialogue.dialogues.join(" ")
+                                )
+                            }
+                        }
                         ScriptContext::Directive(directive) => {
                             if let ScriptDirective::Jump(jump) = directive {
                                 format!(
@@ -189,6 +201,14 @@ impl Begin {
                     guild_id,
                     channel_id,
                     custom.args.get(2).expect("URL not provided").to_string(),
+                    custom
+                        .args
+                        .get(3)
+                        .map(|v| {
+                            v.parse::<f32>()
+                                .expect("Volume must be a valid float number")
+                        })
+                        .unwrap_or(1.),
                 ));
                 self.engine.next(false).unwrap();
             } else {
@@ -214,7 +234,7 @@ impl Begin {
             .expect("Unable to create interaction");
 
         if let Some(play_info) = play_info.take() {
-            play_url(context, play_info.0, play_info.1, &play_info.2)
+            play_url(context, play_info.0, play_info.1, &play_info.2, play_info.3)
                 .await
                 .expect("Cannot play URL");
         }
@@ -253,6 +273,14 @@ impl Begin {
                             guild_id,
                             channel_id,
                             custom.args.get(2).expect("URL not provided").to_string(),
+                            custom
+                                .args
+                                .get(3)
+                                .map(|v| {
+                                    v.parse::<f32>()
+                                        .expect("Volume must be a valid float number")
+                                })
+                                .unwrap_or(1.),
                         ));
                         self.engine.next(false).unwrap();
                     } else {
@@ -279,7 +307,7 @@ impl Begin {
                 .expect("Cannot update interaction");
 
                 if let Some(play_info) = play_info.take() {
-                    play_url(context, play_info.0, play_info.1, &play_info.2)
+                    play_url(context, play_info.0, play_info.1, &play_info.2, play_info.3)
                         .await
                         .expect("Cannot play URL");
                 }

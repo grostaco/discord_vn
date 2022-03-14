@@ -8,6 +8,7 @@ pub async fn play_url(
     guild_id: u64,
     channel_id: u64,
     url: &str,
+    volume: f32,
 ) -> Result<(), PlayError> {
     if !url.starts_with("http") {
         return Err(PlayError::InvalidURL(url.to_string()));
@@ -22,12 +23,14 @@ pub async fn play_url(
     if let Some(handler_lock) = manager.get(guild_id) {
         let mut handler = handler_lock.lock().await;
 
-        let source = match Restartable::ytdl(url.trim().to_owned(), true).await {
+        let source = match Restartable::ytdl(url.trim().to_owned(), false).await {
             Ok(source) => source,
             Err(why) => return Err(PlayError::InputError(why)),
         };
 
         let handle = handler.play_only_source(source.into());
+        handle.set_volume(volume).expect("Cannot set volume");
+
         handle.enable_loop().expect("Cannot enable loop");
     }
 
