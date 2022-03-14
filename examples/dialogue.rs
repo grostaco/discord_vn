@@ -1,4 +1,4 @@
-use image::DynamicImage;
+use image::{DynamicImage, GenericImage};
 use imageproc::{
     drawing::{draw_filled_rect_mut, draw_line_segment_mut, Canvas},
     rect::Rect,
@@ -66,19 +66,13 @@ fn draw_rounded_rect<C>(
 
         draw_line_segment_mut(
             canvas,
+            (xc as f32 + y as f32, yc as f32 - x as f32),
             (
                 (xc - adjusted_width) as f32 - y as f32,
                 yc as f32 - x as f32,
             ),
-            (xc as f32 + y as f32, yc as f32 - x as f32),
             color,
         );
-
-        canvas.draw_pixel(xc - adjusted_width - x as u32, yc - y as u32, color);
-        canvas.draw_pixel(xc - adjusted_width - y as u32, yc - x as u32, color);
-
-        canvas.draw_pixel(xc + x as u32, yc - y as u32, color);
-        canvas.draw_pixel(xc + y as u32, yc - x as u32, color);
 
         if p < 0 {
             p += 2 * x + 1;
@@ -89,19 +83,23 @@ fn draw_rounded_rect<C>(
         x += 1;
     }
 
-    draw_filled_rect_mut(
-        canvas,
-        Rect::at(top_left.0 as i32, (top_left.1 + corner_radius) as i32)
-            .of_size(width, height - corner_radius * 2),
-        color,
-    )
+    if adjusted_height * adjusted_width > 0 {
+        draw_filled_rect_mut(
+            canvas,
+            Rect::at(top_left.0 as i32, (top_left.1 + corner_radius) as i32)
+                .of_size(width + 1, height - corner_radius * 2),
+            color,
+        )
+    }
 }
 
 fn main() {
     let mut img = DynamicImage::new_rgba8(640, 480);
 
-    let (x, y) = (620, 460);
-    draw_rounded_rect(&mut img, (20, 300), (x, y), [0, 0, 0, 255 / 2].into(), 16);
+    let (x, y) = (400, 470);
+    draw_rounded_rect(&mut img, (20, 360), (x, y), [255, 255, 255, 255].into(), 10);
+    img.put_pixel(400, 384, [255, 0, 0, 255].into());
+    let img = img.blur(1.1);
 
     img.save("out.png").unwrap();
 }

@@ -76,8 +76,11 @@ fn main() {
                     fs::remove_file(file.path()).unwrap();
                 }
             }
-            engine.enable_cache();
-            warn!("Cache is enabled. Unexpected rendering may occur. Remove resources/.cache to forcefully render every frame if unexpected results arise.");
+            if std::env::var("NO_CACHE").is_err() {
+                engine.enable_cache();
+                warn!("Cache is enabled. Unexpected rendering may occur. Remove resources/.cache to forcefully render every frame if unexpected results arise.");
+            }
+
             while let Some(ctx) = engine.current() {
                 let mut choice = false;
                 match ctx {

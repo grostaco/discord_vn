@@ -3,7 +3,10 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use image::{imageops::overlay, DynamicImage, GenericImageView, ImageBuffer, Pixel, Rgba};
+use image::{
+    imageops::{blur, overlay},
+    DynamicImage, GenericImageView, ImageBuffer, Pixel, Rgba,
+};
 use imageproc::drawing::draw_filled_circle_mut;
 use rusttype::{point, Font, Scale};
 
@@ -210,7 +213,9 @@ impl Scene {
                 height as i32 + 20,
                 dialogue_background.into(),
             );
-
+        }
+        let mut text_box = blur(&text_box, 1.1);
+        if !character_name.is_empty() {
             draw_text(
                 character_name,
                 text_color,
@@ -219,25 +224,14 @@ impl Scene {
                 self.scale,
                 point(15., height + 5.),
             );
-
-            // overlay(
-            //     &mut image,
-            //     &character_box,
-            //     self.text.xmin,
-            //     self.text.ymin - height as u32 - 18,
-            // );
         }
+
         overlay(
             &mut image,
             &text_box,
             self.text.xmin,
             self.text.ymin - height as u32 - 20,
         );
-
-        // let name_height = {
-        //     let v = self.font.v_metrics(self.scale);
-        //     v.ascent - v.descent
-        // };
 
         let mut scale = self.scale;
         let vertical_pad = v_metrics.ascent as u32;
@@ -357,22 +351,6 @@ impl Scene {
                 self.screen.ymax as f32 / 4.0,
             ),
         );
-
-        /*
-
-        let min_x = a_glyphs
-            .first()
-            .map(|g| g.pixel_bounding_box().unwrap().min.x)
-            .unwrap() as u32;
-        let max_y = a_glyphs
-            .first()
-            .map(|g| g.pixel_bounding_box().unwrap().max.y)
-            .unwrap() as u32;
-        for x in min_x - a_width / 2..self.screen.xmax - (min_x - a_width / 2) {
-            image.put_pixel(x, max_y + (v_metrics.ascent * 0.5) as u32, *white);
-        }
-        */
-
         overlay(
             &mut image,
             &opacity_box,
