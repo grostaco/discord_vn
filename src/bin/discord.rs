@@ -21,7 +21,7 @@ async fn main() {
         }
     };
 
-    let font_data = include_bytes!("../../resources/fonts/Calibri Light.ttf");
+    let font_data = include_bytes!("../../resources/fonts/calibri-regular.ttf");
     let font = Font::try_from_bytes(font_data as &[u8]).unwrap_or_else(|| {
         error!("{}", "Error constructing Font");
         exit(1);
@@ -45,7 +45,7 @@ async fn main() {
             xmin: 20,
             xmax: 620,
             ymin: 340,
-            ymax: 480,
+            ymax: 470,
         },
     };
 
